@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const cleanUsername = username.trim()
       const firstName = executiveName ? executiveName.trim().split(/\s+/)[0].toUpperCase() : ''
-      const placeholderEmail = `${cleanUsername.toLowerCase()}@local`
+      const placeholderEmail = `${cleanUsername.toLowerCase()}@local.dev`
 
       const userData: Record<string, unknown> = {
         email: placeholderEmail,
