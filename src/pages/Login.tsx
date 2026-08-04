@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import { Activity, Lock, Mail, User } from 'lucide-react'
+import { Activity, Lock, User, UserPlus } from 'lucide-react'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [executiveName, setExecutiveName] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -19,8 +19,8 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) {
-      toast.error('Preencha e-mail e senha.')
+    if (!username || !password) {
+      toast.error('Preencha usuário e senha.')
       return
     }
     if (isSignUp && !executiveName.trim()) {
@@ -30,7 +30,7 @@ export default function Login() {
 
     setLoading(true)
     if (isSignUp) {
-      const { error } = await signUp(email, password, executiveName.trim())
+      const { error } = await signUp(username, password, executiveName.trim())
       if (error) {
         toast.error('Erro ao criar conta: ' + (error.message || 'Verifique os dados informados'))
       } else {
@@ -38,9 +38,9 @@ export default function Login() {
         navigate('/dashboard')
       }
     } else {
-      const { error } = await signIn(email, password)
+      const { error } = await signIn(username, password)
       if (error) {
-        toast.error('Falha no login. Verifique e-mail e senha.')
+        toast.error('Falha no login. Verifique usuário e senha.')
       } else {
         toast.success('Bem-vindo ao Dashboard Ações Ativas BI!')
         navigate('/dashboard')
@@ -68,16 +68,33 @@ export default function Login() {
 
         <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-300">Usuário</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <Input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Ex: PAULAPEXE"
+                  className="pl-9 bg-slate-800/80 border-slate-700 text-slate-100 h-10 text-xs focus-visible:ring-emerald-500"
+                  autoCapitalize="none"
+                  autoComplete="username"
+                />
+              </div>
+              <p className="text-[10px] text-slate-500">Usuário ou e-mail para acesso.</p>
+            </div>
+
             {isSignUp && (
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-300">Nome do Executivo</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                  <UserPlus className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                   <Input
                     type="text"
                     value={executiveName}
                     onChange={(e) => setExecutiveName(e.target.value)}
-                    placeholder="Ex: ALESSANDRA, DANIELI..."
+                    placeholder="Ex: PAULA CAROLINA PEXE"
                     className="pl-9 bg-slate-800/80 border-slate-700 text-slate-100 h-10 text-xs focus-visible:ring-emerald-500"
                   />
                 </div>
@@ -88,21 +105,7 @@ export default function Login() {
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-300">E-mail Corporativo</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@empresa.com"
-                  className="pl-9 bg-slate-800/80 border-slate-700 text-slate-100 h-10 text-xs focus-visible:ring-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-300">Senha de Acesso</Label>
+              <Label className="text-xs font-semibold text-slate-300">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                 <Input
@@ -111,6 +114,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pl-9 bg-slate-800/80 border-slate-700 text-slate-100 h-10 text-xs focus-visible:ring-emerald-500"
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 />
               </div>
             </div>

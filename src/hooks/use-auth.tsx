@@ -5,8 +5,8 @@ interface AuthContextType {
   user: any
   isAuthenticated: boolean
   isAdmin: boolean
-  signUp: (email: string, password: string, executiveName?: string) => Promise<{ error: any }>
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (username: string, password: string, executiveName?: string) => Promise<{ error: any }>
+  signIn: (usernameOrEmail: string, password: string) => Promise<{ error: any }>
   signOut: () => void
   loading: boolean
 }
@@ -44,29 +44,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  const signUp = async (email: string, password: string, executiveName?: string) => {
+  const signUp = async (username: string, password: string, executiveName?: string) => {
     try {
+      const cleanUsername = username.trim()
+      const firstName = executiveName ? executiveName.trim().split(/\s+/)[0].toUpperCase() : ''
+      const placeholderEmail = `${cleanUsername.toLowerCase()}@local`
+
       const userData: Record<string, unknown> = {
-        email,
+        email: placeholderEmail,
         password,
         passwordConfirm: password,
         role: 'executive',
+        username: cleanUsername,
       }
       if (executiveName) {
-        userData.name = executiveName
-        userData.executive_name = executiveName
+        userData.name = executiveName.trim()
+        userData.executive_name = firstName
       }
+
       await pb.collection('users').create(userData)
-      await pb.collection('users').authWithPassword(email, password)
+      await pb.collection('users').authWithPassword(cleanUsername, password)
       return { error: null }
     } catch (error) {
       return { error }
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (usernameOrEmail: string, password: string) => {
     try {
-      await pb.collection('users').authWithPassword(email, password)
+      await pb.collection('users').authWithPassword(usernameOrEmail.trim(), password)
       return { error: null }
     } catch (error) {
       return { error }
