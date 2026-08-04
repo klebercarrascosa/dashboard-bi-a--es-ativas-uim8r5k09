@@ -191,7 +191,7 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards */}
-        <KPICards data={displayData} activeTab={activeTab} />
+        <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
 
         {/* BI Visual Charts */}
         <ChartsSection data={displayData} />

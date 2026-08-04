@@ -17,6 +17,16 @@ import {
   FileSpreadsheet,
 } from 'lucide-react'
 
+function formatDateBR(dateStr?: string): string {
+  if (!dateStr) return '—'
+  try {
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  } catch {
+    return '—'
+  }
+}
+
 interface DataTableProps {
   data: SheetRow[]
   activeActions: ActiveAction[]
@@ -82,32 +92,42 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
       'Venda LY',
       'Δ LY',
       '% YoY',
+      'Data Inicio',
+      'Data Fim',
+      'Valor Meta',
+      'Status Plano',
     ]
-    const rows = sortedData.map((r) => [
-      `"${r.clienteUnificado}"`,
-      `"${r.executivo}"`,
-      `"${r.cpfCnpj}"`,
-      `"${r.regional}"`,
-      r.venda ?? '',
-      r.vendaLY ?? '',
-      r.deltaLY ?? '',
-      r.pctYoY !== null ? `${r.pctYoY}%` : '',
-    ])
+    const rows = sortedData.map((r) => {
+      const action = activeActions.find((a) => a.client_name === r.clienteUnificado)
+      return [
+        `"${r.clienteUnificado}"`,
+        `"${r.executivo}"`,
+        `"${r.cpfCnpj}"`,
+        `"${r.regional}"`,
+        r.venda ?? '',
+        r.vendaLY ?? '',
+        r.deltaLY ?? '',
+        r.pctYoY !== null ? `${r.pctYoY}%` : '',
+        action?.data_inicio ?? '',
+        action?.data_fim ?? '',
+        action?.valor_meta ?? '',
+        action?.status ?? '',
+      ]
+    })
     const csvContent =
       'data:text/csv;charset=utf-8,\uFEFF' +
       [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `Acoes_Ativas_BI_Export.csv`)
+    link.setAttribute('download', `Plano_Meta_BI_Export.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  const getActionForClient = (clientName: string) => {
-    return activeActions.find((a) => a.client_name === clientName)
-  }
+  const getActionForClient = (clientName: string) =>
+    activeActions.find((a) => a.client_name === clientName)
 
   const getBadgeStatusColor = (status?: string) => {
     switch (status) {
@@ -160,7 +180,6 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
               </Button>
             )}
           </div>
-
           <Button variant="outline" size="sm" onClick={exportToCSV} className="h-9 text-xs gap-1.5">
             <Download className="h-3.5 w-3.5" /> Exportar CSV
           </Button>
@@ -169,7 +188,7 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
 
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[1100px]">
             <thead className="bg-muted/50 text-muted-foreground border-y font-semibold uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-4">Cliente Unificado</th>
@@ -208,13 +227,16 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
                     % YoY <ArrowUpDown className="h-3 w-3" />
                   </div>
                 </th>
-                <th className="py-3 px-4 text-center">Ação Ativa</th>
+                <th className="py-3 px-4 text-center">Início</th>
+                <th className="py-3 px-4 text-center">Fim</th>
+                <th className="py-3 px-4 text-right">Meta (R$)</th>
+                <th className="py-3 px-4 text-center">Plano de Meta</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={12} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -248,13 +270,7 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
                         {formatCurrency(row.vendaLY)}
                       </td>
                       <td
-                        className={`py-3 px-4 text-right font-mono font-semibold ${
-                          !hasDelta
-                            ? 'text-muted-foreground'
-                            : isPositive
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-rose-600 dark:text-rose-400'
-                        }`}
+                        className={`py-3 px-4 text-right font-mono font-semibold ${!hasDelta ? 'text-muted-foreground' : isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                       >
                         {formatCurrency(row.deltaLY)}
                       </td>
@@ -273,6 +289,15 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
                         ) : (
                           <span className="text-muted-foreground text-[11px]">—</span>
                         )}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono text-[11px] text-muted-foreground">
+                        {action ? formatDateBR(action.data_inicio) : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono text-[11px] text-muted-foreground">
+                        {action ? formatDateBR(action.data_fim) : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-amber-600 dark:text-amber-400">
+                        {action?.valor_meta ? formatCurrency(action.valor_meta) : '—'}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {action ? (
@@ -293,7 +318,7 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
                             className="h-7 text-[11px] text-muted-foreground hover:text-primary gap-1 px-2"
                           >
                             <Plus className="h-3 w-3" />
-                            Criar Ação
+                            Criar Plano
                           </Button>
                         )}
                       </td>

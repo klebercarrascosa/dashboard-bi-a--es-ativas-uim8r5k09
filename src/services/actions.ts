@@ -11,6 +11,9 @@ export interface ActiveAction {
   priority: 'Alta' | 'Média' | 'Baixa'
   note: string
   tab_month: string
+  data_inicio?: string
+  data_fim?: string
+  valor_meta?: number
   created?: string
   updated?: string
 }

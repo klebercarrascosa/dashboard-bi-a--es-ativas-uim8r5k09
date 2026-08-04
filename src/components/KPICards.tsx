@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { SheetRow, formatCurrency, formatPercent } from '@/services/sheets'
+import { ActiveAction } from '@/services/actions'
 import {
   TrendingUp,
   TrendingDown,
@@ -8,14 +9,16 @@ import {
   Users,
   Building2,
   Target,
+  Flag,
 } from 'lucide-react'
 
 interface KPICardsProps {
   data: SheetRow[]
   activeTab: string
+  activeActions: ActiveAction[]
 }
 
-export function KPICards({ data, activeTab }: KPICardsProps) {
+export function KPICards({ data, activeTab, activeActions }: KPICardsProps) {
   const vendaValues = data.map((r) => r.venda).filter((v): v is number => v !== null)
   const vendaLYValues = data.map((r) => r.vendaLY).filter((v): v is number => v !== null)
 
@@ -38,8 +41,19 @@ export function KPICards({ data, activeTab }: KPICardsProps) {
   const isPositive = deltaTotal !== null && deltaTotal >= 0
   const hasDelta = deltaTotal !== null
 
+  const today = new Date().toISOString().split('T')[0]
+  const activePlanCount = new Set(
+    activeActions
+      .filter((a) => {
+        if (a.status === 'Concluído') return false
+        if (!a.data_inicio || !a.data_fim) return false
+        return today >= a.data_inicio && today <= a.data_fim
+      })
+      .map((a) => a.client_name),
+  ).size
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <Card className="shadow-sm border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
@@ -147,6 +161,23 @@ export function KPICards({ data, activeTab }: KPICardsProps) {
                 <Building2 className="h-3 w-3 text-purple-500" /> {regionaisUnicas} Regionais
               </span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Planos de Meta Ativos
+            </p>
+            <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+              <Flag className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <h3 className="text-2xl font-extrabold tracking-tight">{activePlanCount}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Agências com meta vigente</p>
           </div>
         </CardContent>
       </Card>

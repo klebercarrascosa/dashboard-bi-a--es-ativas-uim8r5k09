@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -21,7 +22,7 @@ import { SheetRow, formatCurrency } from '@/services/sheets'
 import { ActiveAction, createActiveAction, updateActiveAction } from '@/services/actions'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import { CheckCircle2, ShieldAlert } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 
 interface ActionModalProps {
   isOpen: boolean
@@ -44,6 +45,9 @@ export function ActionModal({
   const [status, setStatus] = useState<ActiveAction['status']>('Em Negociação')
   const [priority, setPriority] = useState<ActiveAction['priority']>('Média')
   const [note, setNote] = useState('')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
+  const [valorMeta, setValorMeta] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -51,10 +55,16 @@ export function ActionModal({
       setStatus(existingAction.status)
       setPriority(existingAction.priority)
       setNote(existingAction.note || '')
+      setDataInicio(existingAction.data_inicio || '')
+      setDataFim(existingAction.data_fim || '')
+      setValorMeta(existingAction.valor_meta ? String(existingAction.valor_meta) : '')
     } else {
       setStatus('Em Negociação')
       setPriority('Média')
       setNote('')
+      setDataInicio('')
+      setDataFim('')
+      setValorMeta('')
     }
   }, [existingAction, client])
 
@@ -66,14 +76,19 @@ export function ActionModal({
 
     setIsSubmitting(true)
     try {
+      const commonData = {
+        status,
+        priority,
+        note,
+        tab_month: activeTab,
+        data_inicio: dataInicio,
+        data_fim: dataFim,
+        valor_meta: valorMeta ? parseFloat(valorMeta) : 0,
+      }
+
       if (existingAction && existingAction.id) {
-        await updateActiveAction(existingAction.id, {
-          status,
-          priority,
-          note,
-          tab_month: activeTab,
-        })
-        toast.success('Ação ativa atualizada com sucesso!')
+        await updateActiveAction(existingAction.id, commonData)
+        toast.success('Plano de Meta atualizado com sucesso!')
       } else {
         await createActiveAction({
           user_id: user.id,
@@ -81,17 +96,14 @@ export function ActionModal({
           cpf_cnpj: client.cpfCnpj,
           executive: client.executivo,
           regional: client.regional,
-          status,
-          priority,
-          note,
-          tab_month: activeTab,
+          ...commonData,
         })
-        toast.success('Nova Ação Ativa registrada!')
+        toast.success('Novo Plano de Meta registrado!')
       }
       onSaved()
       onClose()
     } catch (err) {
-      toast.error('Erro ao salvar ação ativa no banco de dados.')
+      toast.error('Erro ao salvar Plano de Meta no banco de dados.')
     } finally {
       setIsSubmitting(false)
     }
@@ -103,15 +115,14 @@ export function ActionModal({
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            Ação Ativa do Cliente
+            Plano de Meta do Cliente
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Gerencie planos de ação e acompanhamento para {client.clienteUnificado}
+            Defina metas e prazos para acompanhamento comercial de {client.clienteUnificado}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Summary Box */}
           <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Executivo:</span>
@@ -131,7 +142,40 @@ export function ActionModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Status da Ação</Label>
+              <Label className="text-xs font-semibold">Data Início</Label>
+              <Input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Data Fim</Label>
+              <Input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Valor da Meta (R$)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="Ex: 50000.00"
+              value={valorMeta}
+              onChange={(e) => setValorMeta(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Status do Plano</Label>
               <Select value={status} onValueChange={(val: any) => setStatus(val)}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue />
@@ -162,9 +206,9 @@ export function ActionModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Observações / Próximos Passos</Label>
+            <Label className="text-xs font-semibold">Observações / Estratégia</Label>
             <Textarea
-              placeholder="Descreva a estratégia comercial, prazos de negociação ou detalhes da ação..."
+              placeholder="Descreva a estratégia comercial, prazos de negociação ou detalhes do plano de meta..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="text-xs min-h-[90px]"
@@ -181,7 +225,7 @@ export function ActionModal({
               disabled={isSubmitting}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {isSubmitting ? 'Salvando...' : 'Salvar Ação'}
+              {isSubmitting ? 'Salvando...' : 'Salvar Plano'}
             </Button>
           </DialogFooter>
         </form>
