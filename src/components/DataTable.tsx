@@ -66,6 +66,7 @@ interface DataTableProps {
   onOpenActionModal: (client: SheetRow) => void
   onGenerateReport?: (action: ActiveAction) => void
   onDeleteAction?: (action: ActiveAction) => void
+  onClientClick?: (client: SheetRow) => void
 }
 
 export function DataTable({
@@ -75,6 +76,7 @@ export function DataTable({
   onOpenActionModal,
   onGenerateReport,
   onDeleteAction,
+  onClientClick,
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof SheetRow>('venda')
@@ -305,10 +307,13 @@ export function DataTable({
                   return (
                     <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                       <td
-                        className="py-3 px-4 font-semibold text-foreground max-w-[200px] truncate"
+                        className="py-3 px-4 font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
                         title={row.clienteUnificado}
+                        onClick={() => onClientClick?.(row)}
                       >
-                        {row.clienteUnificado}
+                        <span className="underline-offset-2 hover:underline">
+                          {row.clienteUnificado}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-muted-foreground">{row.executivo}</td>
                       <td className="py-3 px-4 font-mono text-[11px] text-muted-foreground">

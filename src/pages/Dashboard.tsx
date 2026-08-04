@@ -6,6 +6,7 @@ import { DataTable } from '@/components/DataTable'
 import { ActionModal } from '@/components/ActionModal'
 import { SettingsModal } from '@/components/SettingsModal'
 import { ReportDialog } from '@/components/ReportDialog'
+import { ClientDetailDialog } from '@/components/ClientDetailDialog'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -54,6 +55,7 @@ export default function Dashboard() {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [reportAction, setReportAction] = useState<ActiveAction | null>(null)
+  const [detailClient, setDetailClient] = useState<SheetRow | null>(null)
 
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
@@ -168,6 +170,10 @@ export default function Dashboard() {
     setReportAction(action)
   }
 
+  const handleClientClick = (client: SheetRow) => {
+    setDetailClient(client)
+  }
+
   const handleMarkReportAsSent = async (actionId: string) => {
     try {
       const today = new Date().toISOString().slice(0, 10)
@@ -278,6 +284,7 @@ export default function Dashboard() {
           onOpenActionModal={handleOpenActionModal}
           onGenerateReport={handleGenerateReport}
           onDeleteAction={handleDeleteAction}
+          onClientClick={handleClientClick}
         />
       </main>
 
@@ -304,6 +311,16 @@ export default function Dashboard() {
         action={reportAction}
         calc={reportCalc}
         onMarkAsSent={handleMarkReportAsSent}
+      />
+
+      <ClientDetailDialog
+        isOpen={!!detailClient}
+        onClose={() => setDetailClient(null)}
+        client={detailClient}
+        activeTab={activeTab}
+        monthDataMap={monthDataMap}
+        activeActions={activeActions}
+        planCalculations={planCalculations}
       />
     </div>
   )

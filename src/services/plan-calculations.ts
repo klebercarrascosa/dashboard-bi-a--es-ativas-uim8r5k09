@@ -64,6 +64,42 @@ export function calculateSomaVendida(
   return total
 }
 
+export interface MonthlyBreakdownEntry {
+  month: string
+  venda: number | null
+}
+
+export function getMonthlyBreakdown(
+  monthDataMap: Map<string, SheetRow[]>,
+  clientName: string,
+  cpfCnpj: string,
+  startDate?: string,
+  endDate?: string,
+): MonthlyBreakdownEntry[] {
+  const months = getMonthsInRange(startDate, endDate)
+  if (months.length === 0) return []
+  const normName = normalizeClientName(clientName)
+  const normDoc = normalizeCpfCnpj(cpfCnpj)
+  return months.map((month) => {
+    const rows = monthDataMap.get(month)
+    if (!rows) return { month, venda: null }
+    let total = 0
+    let found = false
+    for (const row of rows) {
+      if (
+        normalizeClientName(row.clienteUnificado) === normName &&
+        normalizeCpfCnpj(row.cpfCnpj) === normDoc
+      ) {
+        if (row.venda !== null) {
+          total += row.venda
+          found = true
+        }
+      }
+    }
+    return { month, venda: found ? total : null }
+  })
+}
+
 export interface PlanCalculation {
   somaVendida: number
   quantoFalta: number | null
