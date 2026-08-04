@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T20:28:33.325Z",
+  "generatedAt": "2026-08-04T20:56:41.228Z",
   "collections": [
     {
       "name": "users",
@@ -162,9 +162,18 @@
           "type": "date",
           "required": false,
           "system": false
+        },
+        {
+          "name": "meta_3",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
-      "indexes": []
+      "indexes": [
+        "CREATE INDEX `idx_active_actions_data_inicio` ON `active_actions` (data_inicio)",
+        "CREATE INDEX `idx_active_actions_data_fim` ON `active_actions` (data_fim)"
+      ]
     }
   ]
 }

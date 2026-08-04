@@ -20,6 +20,7 @@ import {
   getActiveActions,
   deleteActiveAction,
   updateActiveAction,
+  findActivePlanForClient,
 } from '@/services/actions'
 import {
   fetchAllMonthData,
@@ -57,6 +58,8 @@ export default function Dashboard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [reportAction, setReportAction] = useState<ActiveAction | null>(null)
   const [detailClient, setDetailClient] = useState<SheetRow | null>(null)
+  const [forceNewPlan, setForceNewPlan] = useState(false)
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
 
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
@@ -140,7 +143,7 @@ export default function Dashboard() {
         action.data_inicio,
         action.data_fim,
       )
-      map.set(action.client_name, calculatePlanMetrics(action, somaVendida))
+      map.set(action.id!, calculatePlanMetrics(action, somaVendida))
     }
     return map
   }, [activeActions, monthDataMap])
@@ -159,6 +162,33 @@ export default function Dashboard() {
 
   const handleOpenActionModal = (client: SheetRow) => {
     setSelectedClientForAction(client)
+    setSelectedActionId(null)
+    setForceNewPlan(false)
+    setIsActionModalOpen(true)
+  }
+
+  const handleCreateNewPlan = (client: SheetRow) => {
+    setSelectedClientForAction(client)
+    setSelectedActionId(null)
+    setForceNewPlan(true)
+    setIsActionModalOpen(true)
+  }
+
+  const handleEditAction = (action: ActiveAction) => {
+    const sheetRow: SheetRow = {
+      id: action.id || '',
+      clienteUnificado: action.client_name,
+      executivo: action.executive || '',
+      cpfCnpj: action.cpf_cnpj || '',
+      regional: action.regional || '',
+      venda: null,
+      vendaLY: null,
+      deltaLY: null,
+      pctYoY: null,
+    }
+    setSelectedClientForAction(sheetRow)
+    setSelectedActionId(action.id || null)
+    setForceNewPlan(false)
     setIsActionModalOpen(true)
   }
 
@@ -193,10 +223,14 @@ export default function Dashboard() {
   }
 
   const currentActionForModal = selectedClientForAction
-    ? activeActions.find((a) => a.client_name === selectedClientForAction.clienteUnificado)
+    ? forceNewPlan
+      ? null
+      : selectedActionId
+        ? (activeActions.find((a) => a.id === selectedActionId) ?? null)
+        : (findActivePlanForClient(activeActions, selectedClientForAction.clienteUnificado) ?? null)
     : null
 
-  const reportCalc = reportAction ? (planCalculations.get(reportAction.client_name) ?? null) : null
+  const reportCalc = reportAction ? (planCalculations.get(reportAction.id ?? '') ?? null) : null
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors duration-200">
@@ -293,7 +327,13 @@ export default function Dashboard() {
         </div>
 
         {activeTab === 'Planos de Meta Ativos' ? (
-          <ActivePlansView activeActions={activeActions} planCalculations={planCalculations} />
+          <ActivePlansView
+            activeActions={activeActions}
+            planCalculations={planCalculations}
+            onEditAction={handleEditAction}
+            onGenerateReport={handleGenerateReport}
+            onDeleteAction={handleDeleteAction}
+          />
         ) : (
           <>
             <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
@@ -309,6 +349,7 @@ export default function Dashboard() {
               activeActions={activeActions}
               planCalculations={planCalculations}
               onOpenActionModal={handleOpenActionModal}
+              onCreateNewPlan={handleCreateNewPlan}
               onGenerateReport={handleGenerateReport}
               onDeleteAction={handleDeleteAction}
               onClientClick={handleClientClick}
@@ -319,7 +360,11 @@ export default function Dashboard() {
 
       <ActionModal
         isOpen={isActionModalOpen}
-        onClose={() => setIsActionModalOpen(false)}
+        onClose={() => {
+          setIsActionModalOpen(false)
+          setForceNewPlan(false)
+          setSelectedActionId(null)
+        }}
         client={selectedClientForAction}
         existingAction={currentActionForModal}
         activeTab={activeTab}

@@ -17,7 +17,7 @@ export function ChartsSection({ data, activeActions, planCalculations }: ChartsS
       .filter((a) => a.status !== 'Concluído')
       .map((a) => ({
         name: a.client_name,
-        pctAtingido: planCalculations.get(a.client_name)?.pctAtingido ?? null,
+        pctAtingido: planCalculations.get(a.id ?? '')?.pctAtingido ?? null,
       }))
       .sort((a, b) => (b.pctAtingido ?? 0) - (a.pctAtingido ?? 0))
   }, [activeActions, planCalculations])

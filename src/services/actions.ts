@@ -15,6 +15,7 @@ export interface ActiveAction {
   data_fim?: string
   valor_meta?: number
   meta_2?: number
+  meta_3?: number
   intervalo_relatorio?: '15 dias' | '30 dias'
   ultimo_relatorio?: string
   created?: string
@@ -30,3 +31,16 @@ export const updateActiveAction = (id: string, data: Partial<ActiveAction>) =>
   pb.collection('active_actions').update(id, data)
 
 export const deleteActiveAction = (id: string) => pb.collection('active_actions').delete(id)
+
+export function findActivePlanForClient(
+  actions: ActiveAction[],
+  clientName: string,
+): ActiveAction | undefined {
+  const today = new Date().toISOString().slice(0, 10)
+  const clientPlans = actions.filter((a) => a.client_name === clientName)
+  const active = clientPlans.find(
+    (a) => a.data_inicio && a.data_fim && today >= a.data_inicio && today <= a.data_fim,
+  )
+  if (active) return active
+  return clientPlans.sort((a, b) => (b.data_inicio || '').localeCompare(a.data_inicio || ''))[0]
+}

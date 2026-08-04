@@ -8,7 +8,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { SheetRow, formatCurrency } from '@/services/sheets'
-import { ActiveAction } from '@/services/actions'
+import { ActiveAction, findActivePlanForClient } from '@/services/actions'
 import { PlanCalculation, getMonthlyBreakdown } from '@/services/plan-calculations'
 import { getClientPositionChange } from '@/services/position-tracking'
 import { ArrowUp, ArrowDown, Minus, TrendingUp, TrendingDown } from 'lucide-react'
@@ -34,8 +34,8 @@ export function ClientDetailDialog({
 }: ClientDetailDialogProps) {
   if (!client) return null
 
-  const action = activeActions.find((a) => a.client_name === client.clienteUnificado)
-  const calc = action ? (planCalculations.get(action.client_name) ?? null) : null
+  const action = findActivePlanForClient(activeActions, client.clienteUnificado)
+  const calc = action ? (planCalculations.get(action.id ?? '') ?? null) : null
   const posChange = getClientPositionChange(
     monthDataMap,
     activeTab,
@@ -192,7 +192,7 @@ export function ClientDetailDialog({
               </p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Meta: </span>
+                  <span className="text-muted-foreground">Meta 1: </span>
                   <span className="font-bold text-amber-600 dark:text-amber-400">
                     {formatCurrency(action.valor_meta ?? null)}
                   </span>
@@ -201,6 +201,12 @@ export function ClientDetailDialog({
                   <span className="text-muted-foreground">Meta 2: </span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">
                     {formatCurrency(action.meta_2 ?? null)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Meta 3: </span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(action.meta_3 ?? null)}
                   </span>
                 </div>
                 <div>
@@ -215,13 +221,37 @@ export function ClientDetailDialog({
                 </div>
                 {calc.quantoFalta !== null && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Quanto Falta: </span>
+                    <span className="text-muted-foreground">Quanto Falta (M1): </span>
                     <span
                       className={`font-bold ${calc.quantoFalta <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}
                     >
                       {calc.quantoFalta <= 0
-                        ? '✅ Meta Atingida!'
+                        ? '✅ Meta 1 Atingida!'
                         : formatCurrency(calc.quantoFalta)}
+                    </span>
+                  </div>
+                )}
+                {calc.quantoFaltaMeta2 !== null && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Quanto Falta (M2): </span>
+                    <span
+                      className={`font-bold ${calc.quantoFaltaMeta2 <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}
+                    >
+                      {calc.quantoFaltaMeta2 <= 0
+                        ? '✅ Meta 2 Atingida!'
+                        : formatCurrency(calc.quantoFaltaMeta2)}
+                    </span>
+                  </div>
+                )}
+                {calc.quantoFaltaMeta3 !== null && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Quanto Falta (M3): </span>
+                    <span
+                      className={`font-bold ${calc.quantoFaltaMeta3 <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-purple-600 dark:text-purple-400'}`}
+                    >
+                      {calc.quantoFaltaMeta3 <= 0
+                        ? '✅ Meta 3 Atingida!'
+                        : formatCurrency(calc.quantoFaltaMeta3)}
                     </span>
                   </div>
                 )}

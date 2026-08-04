@@ -104,8 +104,10 @@ export interface PlanCalculation {
   somaVendida: number
   quantoFalta: number | null
   quantoFaltaMeta2: number | null
+  quantoFaltaMeta3: number | null
   pctAtingido: number | null
   pctAtingidoMeta2: number | null
+  pctAtingidoMeta3: number | null
   isDue: boolean
   nextDueDate: Date | null
 }
@@ -114,10 +116,13 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
   const quantoFalta =
     action.valor_meta && action.valor_meta > 0 ? action.valor_meta - somaVendida : null
   const quantoFaltaMeta2 = action.meta_2 && action.meta_2 > 0 ? action.meta_2 - somaVendida : null
+  const quantoFaltaMeta3 = action.meta_3 && action.meta_3 > 0 ? action.meta_3 - somaVendida : null
   const pctAtingido =
     action.valor_meta && action.valor_meta > 0 ? (somaVendida / action.valor_meta) * 100 : null
   const pctAtingidoMeta2 =
     action.meta_2 && action.meta_2 > 0 ? (somaVendida / action.meta_2) * 100 : null
+  const pctAtingidoMeta3 =
+    action.meta_3 && action.meta_3 > 0 ? (somaVendida / action.meta_3) * 100 : null
   const intervalDays = action.intervalo_relatorio === '15 dias' ? 15 : 30
   let nextDueDate: Date | null = null
   let isDue = false
@@ -137,8 +142,10 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     somaVendida,
     quantoFalta,
     quantoFaltaMeta2,
+    quantoFaltaMeta3,
     pctAtingido,
     pctAtingidoMeta2,
+    pctAtingidoMeta3,
     isDue,
     nextDueDate,
   }
@@ -172,24 +179,31 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
     `📍 Regional: ${action.regional}`,
     `📅 Período: ${formatDateBR(action.data_inicio)} a ${formatDateBR(action.data_fim)}`,
     '',
-    `💰 Valor da Meta: ${formatCurrencyBR(action.valor_meta && action.valor_meta > 0 ? action.valor_meta : null)}`,
+    `💰 Meta 1: ${formatCurrencyBR(action.valor_meta && action.valor_meta > 0 ? action.valor_meta : null)}`,
     `💰 Meta 2: ${formatCurrencyBR(action.meta_2 && action.meta_2 > 0 ? action.meta_2 : null)}`,
+    `💰 Meta 3: ${formatCurrencyBR(action.meta_3 && action.meta_3 > 0 ? action.meta_3 : null)}`,
     `📊 Soma Vendida (no período): ${formatCurrencyBR(calc.somaVendida)}`,
     '',
   ]
 
   if (calc.quantoFalta !== null) {
-    if (calc.quantoFalta <= 0) lines.push('✅ Meta Atingida!')
-    else lines.push(`🎯 Quanto Falta: ${formatCurrencyBR(calc.quantoFalta)}`)
+    if (calc.quantoFalta <= 0) lines.push('✅ Meta 1 Atingida!')
+    else lines.push(`🎯 Quanto Falta (Meta 1): ${formatCurrencyBR(calc.quantoFalta)}`)
   }
   if (calc.quantoFaltaMeta2 !== null) {
     if (calc.quantoFaltaMeta2 <= 0) lines.push('✅ Meta 2 Atingida!')
     else lines.push(`🎯 Quanto Falta (Meta 2): ${formatCurrencyBR(calc.quantoFaltaMeta2)}`)
   }
+  if (calc.quantoFaltaMeta3 !== null) {
+    if (calc.quantoFaltaMeta3 <= 0) lines.push('✅ Meta 3 Atingida!')
+    else lines.push(`🎯 Quanto Falta (Meta 3): ${formatCurrencyBR(calc.quantoFaltaMeta3)}`)
+  }
   if (calc.pctAtingido !== null)
-    lines.push(`📈 % da Meta Atingida: ${calc.pctAtingido.toFixed(1)}%`)
+    lines.push(`📈 % da Meta 1 Atingida: ${calc.pctAtingido.toFixed(1)}%`)
   if (calc.pctAtingidoMeta2 !== null)
     lines.push(`📈 % da Meta 2 Atingida: ${calc.pctAtingidoMeta2.toFixed(1)}%`)
+  if (calc.pctAtingidoMeta3 !== null)
+    lines.push(`📈 % da Meta 3 Atingida: ${calc.pctAtingidoMeta3.toFixed(1)}%`)
 
   return lines.join('\n')
 }

@@ -23,6 +23,27 @@ import { ActiveAction, createActiveAction, updateActiveAction } from '@/services
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { CheckCircle2, Clock } from 'lucide-react'
+import { z } from 'zod'
+
+const planSchema = z
+  .object({
+    dataInicio: z.string().optional(),
+    dataFim: z.string().optional(),
+    valorMeta: z.string().min(1, 'Meta 1 é obrigatória'),
+    meta2: z.string().min(1, 'Meta 2 é obrigatória'),
+    meta3: z.string().min(1, 'Meta 3 é obrigatória'),
+  })
+  .refine(
+    (data) => {
+      if (data.dataInicio && data.dataFim) {
+        return new Date(data.dataInicio) <= new Date(data.dataFim)
+      }
+      return true
+    },
+    { message: 'Data Fim não pode ser anterior à Data Início', path: ['dataFim'] },
+  )
+
+type FieldErrors = Record<string, string>
 
 interface ActionModalProps {
   isOpen: boolean
@@ -49,8 +70,10 @@ export function ActionModal({
   const [dataFim, setDataFim] = useState('')
   const [valorMeta, setValorMeta] = useState('')
   const [meta2, setMeta2] = useState('')
+  const [meta3, setMeta3] = useState('')
   const [intervaloRelatorio, setIntervaloRelatorio] = useState<'15 dias' | '30 dias'>('30 dias')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   const toDateInputValue = (val?: string): string => {
     if (!val || val.trim() === '') return ''
@@ -60,6 +83,7 @@ export function ActionModal({
   }
 
   useEffect(() => {
+    setFieldErrors({})
     if (existingAction) {
       setStatus(existingAction.status)
       setPriority(existingAction.priority)
@@ -68,6 +92,7 @@ export function ActionModal({
       setDataFim(toDateInputValue(existingAction.data_fim))
       setValorMeta(existingAction.valor_meta ? String(existingAction.valor_meta) : '')
       setMeta2(existingAction.meta_2 ? String(existingAction.meta_2) : '')
+      setMeta3(existingAction.meta_3 ? String(existingAction.meta_3) : '')
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -77,6 +102,7 @@ export function ActionModal({
       setDataFim('')
       setValorMeta('')
       setMeta2('')
+      setMeta3('')
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction, client])
@@ -86,6 +112,19 @@ export function ActionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
+
+    const result = planSchema.safeParse({ dataInicio, dataFim, valorMeta, meta2, meta3 })
+    if (!result.success) {
+      const errors: FieldErrors = {}
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as string
+        if (!errors[key]) errors[key] = issue.message
+      }
+      setFieldErrors(errors)
+      return
+    }
+
+    setFieldErrors({})
     setIsSubmitting(true)
     try {
       const commonData = {
@@ -97,6 +136,7 @@ export function ActionModal({
         data_fim: dataFim,
         valor_meta: valorMeta ? parseFloat(valorMeta) : 0,
         meta_2: meta2 ? parseFloat(meta2) : 0,
+        meta_3: meta3 ? parseFloat(meta3) : 0,
         intervalo_relatorio: intervaloRelatorio,
       }
       if (existingAction && existingAction.id) {
@@ -182,12 +222,15 @@ export function ActionModal({
                 onChange={(e) => setDataFim(e.target.value)}
                 className="h-9 text-xs"
               />
+              {fieldErrors.dataFim && (
+                <p className="text-[11px] text-red-500">{fieldErrors.dataFim}</p>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Valor da Meta (R$)</Label>
+              <Label className="text-xs font-semibold">Meta 1 (R$)</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -196,6 +239,9 @@ export function ActionModal({
                 onChange={(e) => setValorMeta(e.target.value)}
                 className="h-9 text-xs"
               />
+              {fieldErrors.valorMeta && (
+                <p className="text-[11px] text-red-500">{fieldErrors.valorMeta}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Meta 2 (R$)</Label>
@@ -207,6 +253,19 @@ export function ActionModal({
                 onChange={(e) => setMeta2(e.target.value)}
                 className="h-9 text-xs"
               />
+              {fieldErrors.meta2 && <p className="text-[11px] text-red-500">{fieldErrors.meta2}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Meta 3 (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 100000.00"
+                value={meta3}
+                onChange={(e) => setMeta3(e.target.value)}
+                className="h-9 text-xs"
+              />
+              {fieldErrors.meta3 && <p className="text-[11px] text-red-500">{fieldErrors.meta3}</p>}
             </div>
           </div>
 

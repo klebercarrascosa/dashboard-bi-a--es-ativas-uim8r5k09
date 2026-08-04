@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SheetRow, formatCurrency, formatPercent } from '@/services/sheets'
-import { ActiveAction } from '@/services/actions'
+import { ActiveAction, findActivePlanForClient } from '@/services/actions'
 import { PlanCalculation } from '@/services/plan-calculations'
 import {
   Search,
@@ -64,6 +64,7 @@ interface DataTableProps {
   activeActions: ActiveAction[]
   planCalculations?: Map<string, PlanCalculation>
   onOpenActionModal: (client: SheetRow) => void
+  onCreateNewPlan?: (client: SheetRow) => void
   onGenerateReport?: (action: ActiveAction) => void
   onDeleteAction?: (action: ActiveAction) => void
   onClientClick?: (client: SheetRow) => void
@@ -74,6 +75,7 @@ export function DataTable({
   activeActions,
   planCalculations = new Map<string, PlanCalculation>(),
   onOpenActionModal,
+  onCreateNewPlan,
   onGenerateReport,
   onDeleteAction,
   onClientClick,
@@ -139,11 +141,13 @@ export function DataTable({
       '% YoY',
       'Data Inicio',
       'Data Fim',
-      'Valor Meta',
+      'Meta 1',
       'Meta 2',
+      'Meta 3',
       'Soma Vendida',
       'Quanto Falta',
       'Quanto Falta M2',
+      'Quanto Falta M3',
       'Status Plano',
     ]
     const rows = sortedData.map((r) => {
@@ -163,9 +167,11 @@ export function DataTable({
         action?.data_fim ?? '',
         action?.valor_meta ?? '',
         action?.meta_2 ?? '',
+        action?.meta_3 ?? '',
         calc?.somaVendida ?? '',
         calc?.quantoFalta ?? '',
         calc?.quantoFaltaMeta2 ?? '',
+        calc?.quantoFaltaMeta3 ?? '',
         action?.status ?? '',
       ]
     })
@@ -181,7 +187,7 @@ export function DataTable({
   }
 
   const getActionForClient = (clientName: string) =>
-    activeActions.find((a) => a.client_name === clientName)
+    findActivePlanForClient(activeActions, clientName)
 
   const renderQuantoFalta = (val: number | null) => {
     if (val === null) return <span className="text-muted-foreground">—</span>
@@ -240,7 +246,7 @@ export function DataTable({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1700px]">
+          <table className="w-full text-left text-xs min-w-[1900px]">
             <thead className="bg-muted/50 text-muted-foreground border-y font-semibold uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-4">Cliente Unificado</th>
@@ -281,18 +287,20 @@ export function DataTable({
                 </th>
                 <th className="py-3 px-4 text-center">Início</th>
                 <th className="py-3 px-4 text-center">Fim</th>
-                <th className="py-3 px-4 text-right">Meta (R$)</th>
+                <th className="py-3 px-4 text-right">Meta 1 (R$)</th>
                 <th className="py-3 px-4 text-right">Meta 2 (R$)</th>
+                <th className="py-3 px-4 text-right">Meta 3 (R$)</th>
                 <th className="py-3 px-4 text-right">Soma Vendida</th>
                 <th className="py-3 px-4 text-right">Quanto Falta</th>
                 <th className="py-3 px-4 text-right">Quanto Falta (M2)</th>
+                <th className="py-3 px-4 text-right">Quanto Falta (M3)</th>
                 <th className="py-3 px-4 text-center">Plano / Relatório</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={18} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -300,7 +308,7 @@ export function DataTable({
                 paginatedData.map((row) => {
                   if (!row) return null
                   const action = getActionForClient(row.clienteUnificado)
-                  const calc = action ? planCalculations?.get(action.client_name) : null
+                  const calc = action ? planCalculations?.get(action.id ?? '') : null
                   const isPositive = row.deltaLY !== null && row.deltaLY >= 0
                   const hasDelta = row.deltaLY !== null
                   const hasDates = !!(action?.data_inicio && action?.data_fim)
@@ -363,6 +371,9 @@ export function DataTable({
                       <td className="py-3 px-4 text-right font-mono font-semibold text-blue-600 dark:text-blue-400">
                         {action?.meta_2 ? formatCurrency(action.meta_2) : '—'}
                       </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-purple-600 dark:text-purple-400">
+                        {action?.meta_3 ? formatCurrency(action.meta_3) : '—'}
+                      </td>
                       <td className="py-3 px-4 text-right font-mono font-semibold">
                         {calc && hasDates ? (
                           formatCurrency(calc.somaVendida)
@@ -384,6 +395,13 @@ export function DataTable({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td className="py-3 px-4 text-right">
+                        {calc && hasDates ? (
+                          renderQuantoFalta(calc.quantoFaltaMeta3)
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
                           {action ? (
@@ -397,6 +415,17 @@ export function DataTable({
                                 <Eye className="h-3 w-3" />
                                 {action.status}
                               </Button>
+                              {onCreateNewPlan && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onCreateNewPlan(row)}
+                                  className="h-7 text-[11px] px-2 text-emerald-600 hover:bg-emerald-500/10"
+                                  title="Criar novo plano"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              )}
                               {onGenerateReport && (
                                 <Button
                                   variant="ghost"
