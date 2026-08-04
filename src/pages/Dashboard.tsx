@@ -7,7 +7,7 @@ import { ActionModal } from '@/components/ActionModal'
 import { SettingsModal } from '@/components/SettingsModal'
 import { ReportDialog } from '@/components/ReportDialog'
 import { ClientDetailDialog } from '@/components/ClientDetailDialog'
-import { PlanDetailDialog } from '@/components/PlanDetailDialog'
+import { ClientPlansDetailDialog } from '@/components/ClientPlansDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
 import {
   SHEET_MONTHS,
@@ -60,7 +60,7 @@ export default function Dashboard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [reportAction, setReportAction] = useState<ActiveAction | null>(null)
   const [detailClient, setDetailClient] = useState<SheetRow | null>(null)
-  const [planDetailAction, setPlanDetailAction] = useState<ActiveAction | null>(null)
+  const [planDetailClientName, setPlanDetailClientName] = useState<string | null>(null)
   const [forceNewPlan, setForceNewPlan] = useState(false)
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
 
@@ -156,16 +156,9 @@ export default function Dashboard() {
     return getActionsCoveringMonth(activeActions, activeTab)
   }, [activeActions, activeTab])
 
-  const clientNamesWithPlans = useMemo(() => {
-    return new Set(actionsCoveringMonth.map((a) => a.client_name.trim().toLowerCase()))
-  }, [actionsCoveringMonth])
-
   const filteredData = sheetData.filter((row) => {
     if (selectedExecutive !== 'all' && row.executivo !== selectedExecutive) return false
     if (selectedRegional !== 'all' && row.regional !== selectedRegional) return false
-    if (activeTab !== 'Visão Geral' && activeTab !== 'Planos de Meta Ativos') {
-      if (!clientNamesWithPlans.has(row.clienteUnificado.trim().toLowerCase())) return false
-    }
     return true
   })
 
@@ -349,19 +342,8 @@ export default function Dashboard() {
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
             onDeleteAction={handleDeleteAction}
-            onClientClick={setPlanDetailAction}
+            onClientClick={setPlanDetailClientName}
           />
-        ) : activeTab !== 'Visão Geral' && actionsCoveringMonth.length === 0 ? (
-          <div className="flex items-center justify-center py-20 text-center">
-            <div>
-              <p className="text-lg font-semibold text-muted-foreground">
-                Nenhum plano ativo para este período
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Selecione outro mês ou crie um novo plano de meta.
-              </p>
-            </div>
-          </div>
         ) : (
           <>
             <KPICards
@@ -429,11 +411,13 @@ export default function Dashboard() {
         planCalculations={planCalculations}
       />
 
-      <PlanDetailDialog
-        isOpen={!!planDetailAction}
-        onClose={() => setPlanDetailAction(null)}
-        action={planDetailAction}
-        calc={planDetailAction ? (planCalculations.get(planDetailAction.id ?? '') ?? null) : null}
+      <ClientPlansDetailDialog
+        isOpen={!!planDetailClientName}
+        onClose={() => setPlanDetailClientName(null)}
+        clientName={planDetailClientName}
+        allActions={activeActions}
+        planCalculations={planCalculations}
+        monthDataMap={monthDataMap}
       />
     </div>
   )

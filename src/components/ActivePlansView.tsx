@@ -31,7 +31,7 @@ interface ActivePlansViewProps {
   onEditAction: (action: ActiveAction) => void
   onGenerateReport: (action: ActiveAction) => void
   onDeleteAction: (action: ActiveAction) => void
-  onClientClick: (action: ActiveAction) => void
+  onClientClick: (clientName: string) => void
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -195,7 +195,7 @@ export function ActivePlansView({
                     <TableRow key={action.id}>
                       <TableCell className="text-xs font-semibold">
                         <button
-                          onClick={() => onClientClick(action)}
+                          onClick={() => onClientClick(action.client_name)}
                           className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
                         >
                           {action.client_name}
