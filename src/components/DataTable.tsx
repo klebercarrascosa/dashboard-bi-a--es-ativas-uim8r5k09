@@ -51,15 +51,15 @@ function getBadgeStatusColor(status?: string) {
 interface DataTableProps {
   data: SheetRow[]
   activeActions: ActiveAction[]
-  planCalculations: Map<string, PlanCalculation>
+  planCalculations?: Map<string, PlanCalculation>
   onOpenActionModal: (client: SheetRow) => void
-  onGenerateReport: (action: ActiveAction) => void
+  onGenerateReport?: (action: ActiveAction) => void
 }
 
 export function DataTable({
   data,
   activeActions,
-  planCalculations,
+  planCalculations = new Map<string, PlanCalculation>(),
   onOpenActionModal,
   onGenerateReport,
 }: DataTableProps) {
@@ -131,8 +131,9 @@ export function DataTable({
       'Status Plano',
     ]
     const rows = sortedData.map((r) => {
+      if (!r) return []
       const action = activeActions.find((a) => a.client_name === r.clienteUnificado)
-      const calc = planCalculations.get(r.clienteUnificado)
+      const calc = planCalculations?.get(r.clienteUnificado)
       return [
         `"${r.clienteUnificado}"`,
         `"${r.executivo}"`,
@@ -281,8 +282,9 @@ export function DataTable({
                 </tr>
               ) : (
                 paginatedData.map((row) => {
+                  if (!row) return null
                   const action = getActionForClient(row.clienteUnificado)
-                  const calc = action ? planCalculations.get(action.client_name) : null
+                  const calc = action ? planCalculations?.get(action.client_name) : null
                   const isPositive = row.deltaLY !== null && row.deltaLY >= 0
                   const hasDelta = row.deltaLY !== null
                   const hasDates = !!(action?.data_inicio && action?.data_fim)
@@ -376,15 +378,17 @@ export function DataTable({
                                 <Eye className="h-3 w-3" />
                                 {action.status}
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onGenerateReport(action)}
-                                className="h-7 text-[11px] px-2 text-blue-600 hover:bg-blue-500/10"
-                                title="Gerar Relatório"
-                              >
-                                <FileText className="h-3 w-3" />
-                              </Button>
+                              {onGenerateReport && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onGenerateReport(action)}
+                                  className="h-7 text-[11px] px-2 text-blue-600 hover:bg-blue-500/10"
+                                  title="Gerar Relatório"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                </Button>
+                              )}
                               {calc?.isDue && (
                                 <CheckCircle2
                                   className="h-3 w-3 text-amber-500"
