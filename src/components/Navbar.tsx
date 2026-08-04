@@ -20,7 +20,7 @@ interface NavbarProps {
   setZoom: React.Dispatch<React.SetStateAction<number>>
   onRefresh: () => void
   isRefreshing: boolean
-  onOpenSettings: () => void
+  onOpenSettings?: () => void
   lastUpdated: Date | null
 }
 
@@ -34,6 +34,7 @@ export function Navbar({
 }: NavbarProps) {
   const { user, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const isAdmin = user?.role === 'admin'
 
   const zoomIn = () => setZoom((prev) => Math.min(prev + 10, 150))
   const zoomOut = () => setZoom((prev) => Math.max(prev - 10, 70))
@@ -116,16 +117,18 @@ export function Navbar({
             <span className="hidden sm:inline">Sincronizar</span>
           </Button>
 
-          {/* Settings Modal */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            onClick={onOpenSettings}
-            title="Configurações de Planilha"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          {/* Settings Modal - Only visible to admin */}
+          {isAdmin && onOpenSettings && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={onOpenSettings}
+              title="Configurações de Planilha"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Theme Toggle */}
           <Button

@@ -48,6 +48,13 @@ export default function Dashboard() {
   const isAdmin = user?.role === 'admin'
   const userExecutiveName = user?.executive_name || ''
 
+  const safeSetIsSettingsModalOpen = useCallback(
+    (open: boolean) => {
+      if (isAdmin) setIsSettingsModalOpen(open)
+    },
+    [isAdmin],
+  )
+
   const [zoom, setZoom] = useState(100)
   const [spreadsheetId, setSpreadsheetId] = useState(DEFAULT_SPREADSHEET_ID)
   const [activeTab, setActiveTab] = useState('Visão Geral')
@@ -271,7 +278,7 @@ export default function Dashboard() {
         setZoom={setZoom}
         onRefresh={loadSheetData}
         isRefreshing={isRefreshing}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenSettings={() => safeSetIsSettingsModalOpen(true)}
         lastUpdated={lastUpdated}
       />
 
@@ -410,13 +417,15 @@ export default function Dashboard() {
         onSaved={loadActiveActions}
       />
 
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        spreadsheetId={spreadsheetId}
-        setSpreadsheetId={setSpreadsheetId}
-        onReload={loadSheetData}
-      />
+      {isAdmin && (
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          spreadsheetId={spreadsheetId}
+          setSpreadsheetId={setSpreadsheetId}
+          onReload={loadSheetData}
+        />
+      )}
 
       <ReportDialog
         isOpen={!!reportAction}
