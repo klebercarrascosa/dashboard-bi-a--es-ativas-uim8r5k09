@@ -22,7 +22,7 @@ import { SheetRow, formatCurrency } from '@/services/sheets'
 import { ActiveAction, createActiveAction, updateActiveAction } from '@/services/actions'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Clock } from 'lucide-react'
 
 interface ActionModalProps {
   isOpen: boolean
@@ -48,6 +48,8 @@ export function ActionModal({
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [valorMeta, setValorMeta] = useState('')
+  const [meta2, setMeta2] = useState('')
+  const [intervaloRelatorio, setIntervaloRelatorio] = useState<'15 dias' | '30 dias'>('30 dias')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const toDateInputValue = (val?: string): string => {
@@ -65,6 +67,8 @@ export function ActionModal({
       setDataInicio(toDateInputValue(existingAction.data_inicio))
       setDataFim(toDateInputValue(existingAction.data_fim))
       setValorMeta(existingAction.valor_meta ? String(existingAction.valor_meta) : '')
+      setMeta2(existingAction.meta_2 ? String(existingAction.meta_2) : '')
+      setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
       setPriority('Média')
@@ -72,6 +76,8 @@ export function ActionModal({
       setDataInicio('')
       setDataFim('')
       setValorMeta('')
+      setMeta2('')
+      setIntervaloRelatorio('30 dias')
     }
   }, [existingAction, client])
 
@@ -80,7 +86,6 @@ export function ActionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-
     setIsSubmitting(true)
     try {
       const commonData = {
@@ -91,8 +96,9 @@ export function ActionModal({
         data_inicio: dataInicio,
         data_fim: dataFim,
         valor_meta: valorMeta ? parseFloat(valorMeta) : 0,
+        meta_2: meta2 ? parseFloat(meta2) : 0,
+        intervalo_relatorio: intervaloRelatorio,
       }
-
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)
         toast.success('Plano de Meta atualizado com sucesso!')
@@ -116,9 +122,20 @@ export function ActionModal({
     }
   }
 
+  const formatDateDisplay = (val?: string) => {
+    if (!val || val.trim() === '') return null
+    try {
+      const d = new Date(val.slice(0, 10) + 'T00:00:00')
+      if (isNaN(d.getTime())) return null
+      return d.toLocaleDateString('pt-BR')
+    } catch {
+      return null
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -168,16 +185,29 @@ export function ActionModal({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Valor da Meta (R$)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              placeholder="Ex: 50000.00"
-              value={valorMeta}
-              onChange={(e) => setValorMeta(e.target.value)}
-              className="h-9 text-xs"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Valor da Meta (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 50000.00"
+                value={valorMeta}
+                onChange={(e) => setValorMeta(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Meta 2 (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 75000.00"
+                value={meta2}
+                onChange={(e) => setMeta2(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -196,7 +226,6 @@ export function ActionModal({
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Prioridade</Label>
               <Select value={priority} onValueChange={(val: any) => setPriority(val)}>
@@ -210,6 +239,29 @@ export function ActionModal({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Intervalo de Relatório</Label>
+            <Select
+              value={intervaloRelatorio}
+              onValueChange={(val: any) => setIntervaloRelatorio(val)}
+            >
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15 dias">A cada 15 dias</SelectItem>
+                <SelectItem value="30 dias">A cada 30 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            {existingAction?.ultimo_relatorio &&
+              formatDateDisplay(existingAction.ultimo_relatorio) && (
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Último relatório enviado: {formatDateDisplay(existingAction.ultimo_relatorio)}
+                </p>
+              )}
           </div>
 
           <div className="space-y-1.5">

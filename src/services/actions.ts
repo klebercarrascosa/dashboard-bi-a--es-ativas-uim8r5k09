@@ -14,6 +14,9 @@ export interface ActiveAction {
   data_inicio?: string
   data_fim?: string
   valor_meta?: number
+  meta_2?: number
+  intervalo_relatorio?: '15 dias' | '30 dias'
+  ultimo_relatorio?: string
   created?: string
   updated?: string
 }
