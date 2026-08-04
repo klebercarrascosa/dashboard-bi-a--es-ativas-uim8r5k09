@@ -40,9 +40,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Filter, Calendar } from 'lucide-react'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+  const userExecutiveName = user?.executive_name || ''
+
   const [zoom, setZoom] = useState(100)
   const [spreadsheetId, setSpreadsheetId] = useState(DEFAULT_SPREADSHEET_ID)
   const [activeTab, setActiveTab] = useState('Visão Geral')
@@ -136,9 +141,23 @@ export default function Dashboard() {
     loadActiveActions()
   })
 
+  const roleFilteredSheetData = useMemo(() => {
+    if (!user) return []
+    if (isAdmin) return sheetData
+    if (!userExecutiveName) return []
+    return sheetData.filter((row) => row.executivo === userExecutiveName)
+  }, [sheetData, isAdmin, userExecutiveName, user])
+
+  const roleFilteredActions = useMemo(() => {
+    if (!user) return []
+    if (isAdmin) return activeActions
+    if (!userExecutiveName) return []
+    return activeActions.filter((a) => a.executive === userExecutiveName)
+  }, [activeActions, isAdmin, userExecutiveName, user])
+
   const planCalculations = useMemo(() => {
     const map = new Map<string, PlanCalculation>()
-    for (const action of activeActions) {
+    for (const action of roleFilteredActions) {
       const somaVendida = calculateSomaVendida(
         monthDataMap,
         action.client_name,
@@ -149,14 +168,15 @@ export default function Dashboard() {
       map.set(action.id!, calculatePlanMetrics(action, somaVendida))
     }
     return map
-  }, [activeActions, monthDataMap])
+  }, [roleFilteredActions, monthDataMap])
 
   const actionsCoveringMonth = useMemo(() => {
-    if (activeTab === 'Visão Geral' || activeTab === 'Planos de Meta Ativos') return activeActions
-    return getActionsCoveringMonth(activeActions, activeTab)
-  }, [activeActions, activeTab])
+    if (activeTab === 'Visão Geral' || activeTab === 'Planos de Meta Ativos')
+      return roleFilteredActions
+    return getActionsCoveringMonth(roleFilteredActions, activeTab)
+  }, [roleFilteredActions, activeTab])
 
-  const filteredData = sheetData.filter((row) => {
+  const filteredData = roleFilteredSheetData.filter((row) => {
     if (selectedExecutive !== 'all' && row.executivo !== selectedExecutive) return false
     if (selectedRegional !== 'all' && row.regional !== selectedRegional) return false
     return true
@@ -165,9 +185,11 @@ export default function Dashboard() {
   const displayData =
     activeTab === 'Visão Geral' ? aggregateSheetRowsByClient(filteredData) : filteredData
 
-  const filteredActiveActions = activeActions.filter((a) => a.client_name !== 'Empresa Alfa Ltda')
-  const uniqueExecutives = Array.from(new Set(sheetData.map((r) => r.executivo))).sort()
-  const uniqueRegionals = Array.from(new Set(sheetData.map((r) => r.regional))).sort()
+  const filteredActiveActions = roleFilteredActions.filter(
+    (a) => a.client_name !== 'Empresa Alfa Ltda',
+  )
+  const uniqueExecutives = Array.from(new Set(roleFilteredSheetData.map((r) => r.executivo))).sort()
+  const uniqueRegionals = Array.from(new Set(roleFilteredSheetData.map((r) => r.regional))).sort()
 
   const handleOpenActionModal = (client: SheetRow) => {
     setSelectedClientForAction(client)
@@ -235,8 +257,9 @@ export default function Dashboard() {
     ? forceNewPlan
       ? null
       : selectedActionId
-        ? (activeActions.find((a) => a.id === selectedActionId) ?? null)
-        : (findActivePlanForClient(activeActions, selectedClientForAction.clienteUnificado) ?? null)
+        ? (roleFilteredActions.find((a) => a.id === selectedActionId) ?? null)
+        : (findActivePlanForClient(roleFilteredActions, selectedClientForAction.clienteUnificado) ??
+          null)
     : null
 
   const reportCalc = reportAction ? (planCalculations.get(reportAction.id ?? '') ?? null) : null
@@ -291,19 +314,21 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
             <Filter className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
 
-            <Select value={selectedExecutive} onValueChange={setSelectedExecutive}>
-              <SelectTrigger className="h-8 text-xs w-[140px]">
-                <SelectValue placeholder="Executivo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Executivos</SelectItem>
-                {uniqueExecutives.map((exec) => (
-                  <SelectItem key={exec} value={exec}>
-                    {exec}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isAdmin && (
+              <Select value={selectedExecutive} onValueChange={setSelectedExecutive}>
+                <SelectTrigger className="h-8 text-xs w-[140px]">
+                  <SelectValue placeholder="Executivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Executivos</SelectItem>
+                  {uniqueExecutives.map((exec) => (
+                    <SelectItem key={exec} value={exec}>
+                      {exec}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={selectedRegional} onValueChange={setSelectedRegional}>
               <SelectTrigger className="h-8 text-xs w-[130px]">
@@ -407,7 +432,7 @@ export default function Dashboard() {
         client={detailClient}
         activeTab={activeTab}
         monthDataMap={monthDataMap}
-        activeActions={activeActions}
+        activeActions={roleFilteredActions}
         planCalculations={planCalculations}
       />
 
@@ -415,7 +440,7 @@ export default function Dashboard() {
         isOpen={!!planDetailClientName}
         onClose={() => setPlanDetailClientName(null)}
         clientName={planDetailClientName}
-        allActions={activeActions}
+        allActions={roleFilteredActions}
         planCalculations={planCalculations}
         monthDataMap={monthDataMap}
       />

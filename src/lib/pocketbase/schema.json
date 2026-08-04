@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T21:09:07.319Z",
+  "generatedAt": "2026-08-04T21:22:05.690Z",
   "collections": [
     {
       "name": "users",
@@ -37,6 +37,19 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "role",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["admin", "executive"]
+        },
+        {
+          "name": "executive_name",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -48,11 +61,11 @@
       "name": "active_actions",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != ''",
-        "view": "@request.auth.id != ''",
-        "create": "@request.auth.id != ''",
-        "update": "@request.auth.id != ''",
-        "delete": "@request.auth.id != ''"
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || executive = @request.auth.executive_name)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || executive = @request.auth.executive_name)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || executive = @request.auth.executive_name)",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || executive = @request.auth.executive_name)",
+        "delete": "@request.auth.id != '' && (@request.auth.role = 'admin' || executive = @request.auth.executive_name)"
       },
       "fields": [
         {

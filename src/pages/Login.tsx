@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import { Activity, ShieldCheck, Lock, Mail } from 'lucide-react'
+import { Activity, Lock, Mail, User } from 'lucide-react'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('kleber.carrascosa@gmail.com')
-  const [password, setPassword] = useState('Skip@Pass')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [executiveName, setExecutiveName] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -22,15 +23,19 @@ export default function Login() {
       toast.error('Preencha e-mail e senha.')
       return
     }
+    if (isSignUp && !executiveName.trim()) {
+      toast.error('Informe o nome do executivo.')
+      return
+    }
 
     setLoading(true)
     if (isSignUp) {
-      const { error } = await signUp(email, password)
+      const { error } = await signUp(email, password, executiveName.trim())
       if (error) {
-        toast.error('Erro ao criar conta: ' + (error.message || 'Verifique as credenciais'))
+        toast.error('Erro ao criar conta: ' + (error.message || 'Verifique os dados informados'))
       } else {
-        toast.success('Conta criada e autenticada com sucesso!')
-        navigate('/')
+        toast.success('Conta criada com sucesso!')
+        navigate('/dashboard')
       }
     } else {
       const { error } = await signIn(email, password)
@@ -38,7 +43,7 @@ export default function Login() {
         toast.error('Falha no login. Verifique e-mail e senha.')
       } else {
         toast.success('Bem-vindo ao Dashboard Ações Ativas BI!')
-        navigate('/')
+        navigate('/dashboard')
       }
     }
     setLoading(false)
@@ -55,12 +60,33 @@ export default function Login() {
             BI Ações Ativas
           </CardTitle>
           <CardDescription className="text-xs text-slate-400">
-            Acesso seguro para controle comercial e acompanhamento YoY
+            {isSignUp
+              ? 'Crie sua conta de executivo para acessar o dashboard'
+              : 'Acesso seguro para controle comercial e acompanhamento YoY'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-300">Nome do Executivo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                  <Input
+                    type="text"
+                    value={executiveName}
+                    onChange={(e) => setExecutiveName(e.target.value)}
+                    placeholder="Ex: ALESSANDRA, DANIELI..."
+                    className="pl-9 bg-slate-800/80 border-slate-700 text-slate-100 h-10 text-xs focus-visible:ring-emerald-500"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Use o mesmo nome que aparece na planilha de vendas.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-300">E-mail Corporativo</Label>
               <div className="relative">
@@ -97,7 +123,7 @@ export default function Login() {
               {loading
                 ? 'Autenticando...'
                 : isSignUp
-                  ? 'Criar Conta de Acesso'
+                  ? 'Criar Conta de Executivo'
                   : 'Entrar no Dashboard BI'}
             </Button>
           </form>
@@ -105,23 +131,14 @@ export default function Login() {
           <div className="mt-4 text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp)
+                setExecutiveName('')
+              }}
               className="text-xs text-emerald-400 hover:underline transition-colors"
             >
-              {isSignUp ? 'Já possui conta? Faça login aqui' : 'Criar nova conta de usuário'}
+              {isSignUp ? 'Já possui conta? Faça login aqui' : 'Criar conta de executivo'}
             </button>
-          </div>
-
-          <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950/50 p-3 text-[11px] text-slate-400 space-y-1">
-            <p className="font-semibold text-slate-300 flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Credenciais de Demonstração:
-            </p>
-            <p>
-              E-mail: <code className="text-slate-200 font-mono">kleber.carrascosa@gmail.com</code>
-            </p>
-            <p>
-              Senha: <code className="text-slate-200 font-mono">Skip@Pass</code>
-            </p>
           </div>
         </CardContent>
       </Card>

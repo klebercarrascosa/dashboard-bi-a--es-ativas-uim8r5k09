@@ -51,9 +51,10 @@ export function Navbar({
               <h1 className="text-lg font-bold tracking-tight">Ações Ativas BI</h1>
               <Badge
                 variant="outline"
-                className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                className={`text-xs ${user?.role === 'admin' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'}`}
               >
-                <ShieldCheck className="mr-1 h-3 w-3" /> Conectado
+                <ShieldCheck className="mr-1 h-3 w-3" />{' '}
+                {user?.role === 'admin' ? 'Admin' : 'Executivo'}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground hidden sm:block">
@@ -147,7 +148,9 @@ export function Navbar({
               <p className="font-semibold leading-tight">
                 {user?.name || user?.email || 'Usuário'}
               </p>
-              <p className="text-[10px] text-muted-foreground">{user?.email}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {user?.role === 'admin' ? 'Administrador' : user?.executive_name || user?.email}
+              </p>
             </div>
             <Button
               variant="ghost"
