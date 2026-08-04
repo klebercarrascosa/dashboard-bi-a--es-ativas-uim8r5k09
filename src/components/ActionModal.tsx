@@ -50,13 +50,20 @@ export function ActionModal({
   const [valorMeta, setValorMeta] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const toDateInputValue = (val?: string): string => {
+    if (!val || val.trim() === '') return ''
+    const datePart = val.trim().slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return ''
+    return datePart
+  }
+
   useEffect(() => {
     if (existingAction) {
       setStatus(existingAction.status)
       setPriority(existingAction.priority)
       setNote(existingAction.note || '')
-      setDataInicio(existingAction.data_inicio || '')
-      setDataFim(existingAction.data_fim || '')
+      setDataInicio(toDateInputValue(existingAction.data_inicio))
+      setDataFim(toDateInputValue(existingAction.data_fim))
       setValorMeta(existingAction.valor_meta ? String(existingAction.valor_meta) : '')
     } else {
       setStatus('Em Negociação')

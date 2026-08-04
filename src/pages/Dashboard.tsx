@@ -45,16 +45,29 @@ export default function Dashboard() {
   // Load Sheet Data
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
-    if (activeTab === 'Visão Geral') {
-      const months = SHEET_MONTHS.filter((m) => m !== 'Visão Geral')
-      const allRows = await Promise.all(months.map((m) => fetchGoogleSheetData(spreadsheetId, m)))
-      setSheetData(allRows.flat())
-    } else {
-      const rows = await fetchGoogleSheetData(spreadsheetId, activeTab)
-      setSheetData(rows)
+    setSheetData([])
+    try {
+      if (activeTab === 'Visão Geral') {
+        const months = SHEET_MONTHS.filter((m) => m !== 'Visão Geral')
+        const results = await Promise.all(months.map((m) => fetchGoogleSheetData(spreadsheetId, m)))
+        const allRows: SheetRow[] = []
+        for (const rows of results) {
+          if (rows && rows.length > 0) {
+            allRows.push(...rows)
+          }
+        }
+        setSheetData(allRows)
+      } else {
+        const rows = await fetchGoogleSheetData(spreadsheetId, activeTab)
+        setSheetData(rows || [])
+      }
+      setLastUpdated(new Date())
+    } catch (err) {
+      console.warn('Failed to load sheet data:', err)
+      setSheetData([])
+    } finally {
+      setIsRefreshing(false)
     }
-    setLastUpdated(new Date())
-    setIsRefreshing(false)
   }, [spreadsheetId, activeTab])
 
   // Load Active Actions from PocketBase
@@ -74,6 +87,11 @@ export default function Dashboard() {
   useEffect(() => {
     loadActiveActions()
   }, [loadActiveActions])
+
+  useEffect(() => {
+    setSelectedExecutive('all')
+    setSelectedRegional('all')
+  }, [activeTab])
 
   // Realtime subscription for Active Actions
   useRealtime('active_actions', () => {

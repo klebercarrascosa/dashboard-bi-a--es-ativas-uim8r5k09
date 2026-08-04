@@ -18,9 +18,12 @@ import {
 } from 'lucide-react'
 
 function formatDateBR(dateStr?: string): string {
-  if (!dateStr) return '—'
+  if (!dateStr || dateStr.trim() === '') return '—'
   try {
-    const d = new Date(dateStr + 'T00:00:00')
+    const datePart = dateStr.trim().slice(0, 10)
+    if (!datePart || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return '—'
+    const d = new Date(datePart + 'T00:00:00')
+    if (isNaN(d.getTime())) return '—'
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
   } catch {
     return '—'
