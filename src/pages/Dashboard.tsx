@@ -10,6 +10,7 @@ import {
   DEFAULT_SPREADSHEET_ID,
   SheetRow,
   fetchGoogleSheetData,
+  aggregateSheetRowsByClient,
 } from '@/services/sheets'
 import { ActiveAction, getActiveActions } from '@/services/actions'
 import {
@@ -44,8 +45,14 @@ export default function Dashboard() {
   // Load Sheet Data
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
-    const rows = await fetchGoogleSheetData(spreadsheetId, activeTab)
-    setSheetData(rows)
+    if (activeTab === 'Visão Geral') {
+      const months = SHEET_MONTHS.filter((m) => m !== 'Visão Geral')
+      const allRows = await Promise.all(months.map((m) => fetchGoogleSheetData(spreadsheetId, m)))
+      setSheetData(allRows.flat())
+    } else {
+      const rows = await fetchGoogleSheetData(spreadsheetId, activeTab)
+      setSheetData(rows)
+    }
     setLastUpdated(new Date())
     setIsRefreshing(false)
   }, [spreadsheetId, activeTab])
@@ -79,6 +86,9 @@ export default function Dashboard() {
     if (selectedRegional !== 'all' && row.regional !== selectedRegional) return false
     return true
   })
+
+  const displayData =
+    activeTab === 'Visão Geral' ? aggregateSheetRowsByClient(filteredData) : filteredData
 
   const uniqueExecutives = Array.from(new Set(sheetData.map((r) => r.executivo))).sort()
   const uniqueRegionals = Array.from(new Set(sheetData.map((r) => r.regional))).sort()
@@ -181,14 +191,14 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards */}
-        <KPICards data={filteredData} activeTab={activeTab} />
+        <KPICards data={displayData} activeTab={activeTab} />
 
         {/* BI Visual Charts */}
-        <ChartsSection data={filteredData} />
+        <ChartsSection data={displayData} />
 
         {/* Interactive Data Table */}
         <DataTable
-          data={filteredData}
+          data={displayData}
           activeActions={activeActions}
           onOpenActionModal={handleOpenActionModal}
         />

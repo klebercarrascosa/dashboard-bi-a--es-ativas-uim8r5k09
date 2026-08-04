@@ -207,3 +207,59 @@ export function formatPercent(value: number): string {
   const prefix = value > 0 ? '+' : ''
   return `${prefix}${value.toFixed(1)}%`
 }
+
+export function normalizeCpfCnpj(val: string): string {
+  return (val || '').replace(/\D/g, '')
+}
+
+export function normalizeClientName(val: string): string {
+  return (val || '').trim().toLowerCase()
+}
+
+export function aggregateSheetRowsByClient(rows: SheetRow[]): SheetRow[] {
+  const groups = new Map<string, SheetRow[]>()
+
+  for (const row of rows) {
+    const key = `${normalizeClientName(row.clienteUnificado)}|${normalizeCpfCnpj(row.cpfCnpj)}`
+    const existing = groups.get(key)
+    if (existing) {
+      existing.push(row)
+    } else {
+      groups.set(key, [row])
+    }
+  }
+
+  const result: SheetRow[] = []
+
+  for (const [key, groupRows] of groups) {
+    const totalVenda = groupRows.reduce((sum, r) => sum + r.venda, 0)
+    const totalVendaLY = groupRows.reduce((sum, r) => sum + r.vendaLY, 0)
+    const deltaLY = totalVenda - totalVendaLY
+    const pctYoY = totalVendaLY > 0 ? ((totalVenda - totalVendaLY) / totalVendaLY) * 100 : 0
+
+    const execCounts = new Map<string, number>()
+    const regCounts = new Map<string, number>()
+    for (const r of groupRows) {
+      execCounts.set(r.executivo, (execCounts.get(r.executivo) || 0) + 1)
+      regCounts.set(r.regional, (regCounts.get(r.regional) || 0) + 1)
+    }
+    const executive =
+      Array.from(execCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || groupRows[0].executivo
+    const regional =
+      Array.from(regCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || groupRows[0].regional
+
+    result.push({
+      id: key,
+      clienteUnificado: groupRows[0].clienteUnificado.trim(),
+      executivo: executive,
+      cpfCnpj: groupRows[0].cpfCnpj,
+      regional,
+      venda: totalVenda,
+      vendaLY: totalVendaLY,
+      deltaLY,
+      pctYoY: parseFloat(pctYoY.toFixed(2)),
+    })
+  }
+
+  return result
+}
