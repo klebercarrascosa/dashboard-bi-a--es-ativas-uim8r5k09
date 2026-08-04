@@ -8,7 +8,6 @@ import { SettingsModal } from '@/components/SettingsModal'
 import { ReportDialog } from '@/components/ReportDialog'
 import { ClientDetailDialog } from '@/components/ClientDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
-import { ActivePlansView } from '@/components/ActivePlansView'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
