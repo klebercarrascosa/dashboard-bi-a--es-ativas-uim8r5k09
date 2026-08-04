@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T19:15:40.567Z",
+  "generatedAt": "2026-08-04T19:27:42.788Z",
   "collections": [
     {
       "name": "users",
@@ -141,6 +141,25 @@
         {
           "name": "valor_meta",
           "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "meta_2",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "intervalo_relatorio",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["15 dias", "30 dias"]
+        },
+        {
+          "name": "ultimo_relatorio",
+          "type": "date",
           "required": false,
           "system": false
         }

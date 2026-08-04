@@ -1,5 +1,10 @@
 migrate(
   (app) => {
+    try {
+      app.findCollectionByNameOrId('active_actions')
+      return
+    } catch (_) {}
+
     const collection = new Collection({
       name: 'active_actions',
       type: 'base',
@@ -24,27 +29,27 @@ migrate(
         {
           name: 'status',
           type: 'select',
-          required: true,
           values: ['Planejada', 'Em Negociação', 'Concluído', 'Em Risco', 'Pendente'],
           maxSelect: 1,
         },
-        {
-          name: 'priority',
-          type: 'select',
-          required: true,
-          values: ['Alta', 'Média', 'Baixa'],
-          maxSelect: 1,
-        },
+        { name: 'priority', type: 'select', values: ['Alta', 'Média', 'Baixa'], maxSelect: 1 },
         { name: 'note', type: 'text' },
         { name: 'tab_month', type: 'text' },
         { name: 'created', type: 'autodate', onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true },
       ],
+      indexes: [
+        'CREATE INDEX idx_active_actions_tab_month ON active_actions (tab_month)',
+        'CREATE INDEX idx_active_actions_status ON active_actions (status)',
+        'CREATE INDEX idx_active_actions_user_id ON active_actions (user_id)',
+      ],
     })
     app.save(collection)
   },
   (app) => {
-    const collection = app.findCollectionByNameOrId('active_actions')
-    app.delete(collection)
+    try {
+      const collection = app.findCollectionByNameOrId('active_actions')
+      app.delete(collection)
+    } catch (_) {}
   },
 )

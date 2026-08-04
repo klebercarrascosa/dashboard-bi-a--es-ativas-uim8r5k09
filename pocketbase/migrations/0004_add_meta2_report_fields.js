@@ -25,18 +25,14 @@ migrate(
   (app) => {
     const col = app.findCollectionByNameOrId('active_actions')
 
-    try {
-      const f1 = col.fields.getByName('meta_2')
-      if (f1) col.fields.remove(f1)
-    } catch (_) {}
-    try {
-      const f2 = col.fields.getByName('intervalo_relatorio')
-      if (f2) col.fields.remove(f2)
-    } catch (_) {}
-    try {
-      const f3 = col.fields.getByName('ultimo_relatorio')
-      if (f3) col.fields.remove(f3)
-    } catch (_) {}
+    const meta2 = col.fields.getByName('meta_2')
+    if (meta2) col.fields.remove(meta2)
+
+    const intervalo = col.fields.getByName('intervalo_relatorio')
+    if (intervalo) col.fields.remove(intervalo)
+
+    const ultimoRel = col.fields.getByName('ultimo_relatorio')
+    if (ultimoRel) col.fields.remove(ultimoRel)
 
     app.save(col)
   },
