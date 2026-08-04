@@ -7,6 +7,7 @@ import { ActionModal } from '@/components/ActionModal'
 import { SettingsModal } from '@/components/SettingsModal'
 import { ReportDialog } from '@/components/ReportDialog'
 import { ClientDetailDialog } from '@/components/ClientDetailDialog'
+import { PlanDetailDialog } from '@/components/PlanDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
 import {
   SHEET_MONTHS,
@@ -26,6 +27,7 @@ import {
   fetchAllMonthData,
   calculateSomaVendida,
   calculatePlanMetrics,
+  getActionsCoveringMonth,
   type PlanCalculation,
 } from '@/services/plan-calculations'
 import {
@@ -58,6 +60,7 @@ export default function Dashboard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [reportAction, setReportAction] = useState<ActiveAction | null>(null)
   const [detailClient, setDetailClient] = useState<SheetRow | null>(null)
+  const [planDetailAction, setPlanDetailAction] = useState<ActiveAction | null>(null)
   const [forceNewPlan, setForceNewPlan] = useState(false)
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
 
@@ -148,15 +151,28 @@ export default function Dashboard() {
     return map
   }, [activeActions, monthDataMap])
 
+  const actionsCoveringMonth = useMemo(() => {
+    if (activeTab === 'Visão Geral' || activeTab === 'Planos de Meta Ativos') return activeActions
+    return getActionsCoveringMonth(activeActions, activeTab)
+  }, [activeActions, activeTab])
+
+  const clientNamesWithPlans = useMemo(() => {
+    return new Set(actionsCoveringMonth.map((a) => a.client_name.trim().toLowerCase()))
+  }, [actionsCoveringMonth])
+
   const filteredData = sheetData.filter((row) => {
     if (selectedExecutive !== 'all' && row.executivo !== selectedExecutive) return false
     if (selectedRegional !== 'all' && row.regional !== selectedRegional) return false
+    if (activeTab !== 'Visão Geral' && activeTab !== 'Planos de Meta Ativos') {
+      if (!clientNamesWithPlans.has(row.clienteUnificado.trim().toLowerCase())) return false
+    }
     return true
   })
 
   const displayData =
     activeTab === 'Visão Geral' ? aggregateSheetRowsByClient(filteredData) : filteredData
 
+  const filteredActiveActions = activeActions.filter((a) => a.client_name !== 'Empresa Alfa Ltda')
   const uniqueExecutives = Array.from(new Set(sheetData.map((r) => r.executivo))).sort()
   const uniqueRegionals = Array.from(new Set(sheetData.map((r) => r.regional))).sort()
 
@@ -328,25 +344,41 @@ export default function Dashboard() {
 
         {activeTab === 'Planos de Meta Ativos' ? (
           <ActivePlansView
-            activeActions={activeActions}
+            activeActions={filteredActiveActions}
             planCalculations={planCalculations}
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
             onDeleteAction={handleDeleteAction}
+            onClientClick={setPlanDetailAction}
           />
+        ) : activeTab !== 'Visão Geral' && actionsCoveringMonth.length === 0 ? (
+          <div className="flex items-center justify-center py-20 text-center">
+            <div>
+              <p className="text-lg font-semibold text-muted-foreground">
+                Nenhum plano ativo para este período
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Selecione outro mês ou crie um novo plano de meta.
+              </p>
+            </div>
+          </div>
         ) : (
           <>
-            <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
+            <KPICards
+              data={displayData}
+              activeTab={activeTab}
+              activeActions={actionsCoveringMonth}
+            />
 
             <ChartsSection
               data={displayData}
-              activeActions={activeActions}
+              activeActions={actionsCoveringMonth}
               planCalculations={planCalculations}
             />
 
             <DataTable
               data={displayData}
-              activeActions={activeActions}
+              activeActions={actionsCoveringMonth}
               planCalculations={planCalculations}
               onOpenActionModal={handleOpenActionModal}
               onCreateNewPlan={handleCreateNewPlan}
@@ -395,6 +427,13 @@ export default function Dashboard() {
         monthDataMap={monthDataMap}
         activeActions={activeActions}
         planCalculations={planCalculations}
+      />
+
+      <PlanDetailDialog
+        isOpen={!!planDetailAction}
+        onClose={() => setPlanDetailAction(null)}
+        action={planDetailAction}
+        calc={planDetailAction ? (planCalculations.get(planDetailAction.id ?? '') ?? null) : null}
       />
     </div>
   )

@@ -31,6 +31,7 @@ interface ActivePlansViewProps {
   onEditAction: (action: ActiveAction) => void
   onGenerateReport: (action: ActiveAction) => void
   onDeleteAction: (action: ActiveAction) => void
+  onClientClick: (action: ActiveAction) => void
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -73,6 +74,7 @@ export function ActivePlansView({
   onEditAction,
   onGenerateReport,
   onDeleteAction,
+  onClientClick,
 }: ActivePlansViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<ActiveAction | null>(null)
 
@@ -191,7 +193,14 @@ export function ActivePlansView({
                 <TableBody>
                   {plansWithData.map(({ action, calc }) => (
                     <TableRow key={action.id}>
-                      <TableCell className="text-xs font-semibold">{action.client_name}</TableCell>
+                      <TableCell className="text-xs font-semibold">
+                        <button
+                          onClick={() => onClientClick(action)}
+                          className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                        >
+                          {action.client_name}
+                        </button>
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDateBR(action.data_inicio)} → {formatDateBR(action.data_fim)}
                       </TableCell>

@@ -208,6 +208,16 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
   return lines.join('\n')
 }
 
+export function getActionsCoveringMonth(
+  actions: ActiveAction[],
+  monthName: string,
+): ActiveAction[] {
+  return actions.filter((action) => {
+    const months = getMonthsInRange(action.data_inicio, action.data_fim)
+    return months.includes(monthName)
+  })
+}
+
 export async function fetchAllMonthData(spreadsheetId: string): Promise<Map<string, SheetRow[]>> {
   const months = SHEET_MONTHS.filter((m) => m !== 'Visão Geral')
   const results = await Promise.allSettled(
