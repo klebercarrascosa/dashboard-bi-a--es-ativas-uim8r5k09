@@ -18,7 +18,18 @@ import {
   FileSpreadsheet,
   FileText,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 function formatDateBR(dateStr?: string): string {
   if (!dateStr || dateStr.trim() === '') return '—'
@@ -54,6 +65,7 @@ interface DataTableProps {
   planCalculations?: Map<string, PlanCalculation>
   onOpenActionModal: (client: SheetRow) => void
   onGenerateReport?: (action: ActiveAction) => void
+  onDeleteAction?: (action: ActiveAction) => void
 }
 
 export function DataTable({
@@ -62,11 +74,13 @@ export function DataTable({
   planCalculations = new Map<string, PlanCalculation>(),
   onOpenActionModal,
   onGenerateReport,
+  onDeleteAction,
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof SheetRow>('venda')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteTarget, setDeleteTarget] = useState<ActiveAction | null>(null)
   const pageSize = 8
 
   const filteredData = useMemo(() => {
@@ -395,6 +409,17 @@ export function DataTable({
                                   title="Relatório pendente"
                                 />
                               )}
+                              {onDeleteAction && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteTarget(action)}
+                                  className="h-7 text-[11px] px-2 text-destructive hover:bg-destructive/10"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
                             </>
                           ) : (
                             <Button
@@ -441,6 +466,32 @@ export function DataTable({
           </div>
         </div>
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Plano de Meta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o plano de meta de{' '}
+              <strong>{deleteTarget?.client_name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget && onDeleteAction) {
+                  onDeleteAction(deleteTarget)
+                  setDeleteTarget(null)
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

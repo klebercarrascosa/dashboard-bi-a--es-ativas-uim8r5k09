@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Navbar } from '@/components/Navbar'
 import { KPICards } from '@/components/KPICards'
 import { ChartsSection } from '@/components/ChartsSection'
 import { DataTable } from '@/components/DataTable'
 import { ActionModal } from '@/components/ActionModal'
 import { SettingsModal } from '@/components/SettingsModal'
+import { ReportDialog } from '@/components/ReportDialog'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -12,7 +13,18 @@ import {
   fetchGoogleSheetData,
   aggregateSheetRowsByClient,
 } from '@/services/sheets'
-import { ActiveAction, getActiveActions } from '@/services/actions'
+import {
+  ActiveAction,
+  getActiveActions,
+  deleteActiveAction,
+  updateActiveAction,
+} from '@/services/actions'
+import {
+  fetchAllMonthData,
+  calculateSomaVendida,
+  calculatePlanMetrics,
+  type PlanCalculation,
+} from '@/services/plan-calculations'
 import {
   Select,
   SelectContent,
@@ -21,8 +33,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Filter, Calendar, RefreshCw } from 'lucide-react'
+import { Filter, Calendar } from 'lucide-react'
 import { useRealtime } from '@/hooks/use-realtime'
+import { toast } from 'sonner'
 
 export default function Dashboard() {
   const [zoom, setZoom] = useState(100)
@@ -32,17 +45,16 @@ export default function Dashboard() {
   const [activeActions, setActiveActions] = useState<ActiveAction[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [monthDataMap, setMonthDataMap] = useState<Map<string, SheetRow[]>>(new Map())
 
-  // Filters
   const [selectedExecutive, setSelectedExecutive] = useState<string>('all')
   const [selectedRegional, setSelectedRegional] = useState<string>('all')
 
-  // Modals
   const [selectedClientForAction, setSelectedClientForAction] = useState<SheetRow | null>(null)
   const [isActionModalOpen, setIsActionModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [reportAction, setReportAction] = useState<ActiveAction | null>(null)
 
-  // Load Sheet Data
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
     setSheetData([])
@@ -70,7 +82,6 @@ export default function Dashboard() {
     }
   }, [spreadsheetId, activeTab])
 
-  // Load Active Actions from PocketBase
   const loadActiveActions = useCallback(async () => {
     try {
       const actions = await getActiveActions()
@@ -79,6 +90,15 @@ export default function Dashboard() {
       console.warn('Could not load active actions from backend', err)
     }
   }, [])
+
+  const loadMonthDataMap = useCallback(async () => {
+    try {
+      const map = await fetchAllMonthData(spreadsheetId)
+      setMonthDataMap(map)
+    } catch (err) {
+      console.warn('Could not load month data map', err)
+    }
+  }, [spreadsheetId])
 
   useEffect(() => {
     loadSheetData()
@@ -89,16 +109,33 @@ export default function Dashboard() {
   }, [loadActiveActions])
 
   useEffect(() => {
+    loadMonthDataMap()
+  }, [loadMonthDataMap])
+
+  useEffect(() => {
     setSelectedExecutive('all')
     setSelectedRegional('all')
   }, [activeTab])
 
-  // Realtime subscription for Active Actions
   useRealtime('active_actions', () => {
     loadActiveActions()
   })
 
-  // Filtered Sheet Data for KPIs, Charts and Table
+  const planCalculations = useMemo(() => {
+    const map = new Map<string, PlanCalculation>()
+    for (const action of activeActions) {
+      const somaVendida = calculateSomaVendida(
+        monthDataMap,
+        action.client_name,
+        action.cpf_cnpj,
+        action.data_inicio,
+        action.data_fim,
+      )
+      map.set(action.client_name, calculatePlanMetrics(action, somaVendida))
+    }
+    return map
+  }, [activeActions, monthDataMap])
+
   const filteredData = sheetData.filter((row) => {
     if (selectedExecutive !== 'all' && row.executivo !== selectedExecutive) return false
     if (selectedRegional !== 'all' && row.regional !== selectedRegional) return false
@@ -116,9 +153,37 @@ export default function Dashboard() {
     setIsActionModalOpen(true)
   }
 
+  const handleDeleteAction = async (action: ActiveAction) => {
+    if (!action.id) return
+    try {
+      await deleteActiveAction(action.id)
+      await loadActiveActions()
+      toast.success('Plano de Meta excluído com sucesso!')
+    } catch {
+      toast.error('Erro ao excluir Plano de Meta.')
+    }
+  }
+
+  const handleGenerateReport = (action: ActiveAction) => {
+    setReportAction(action)
+  }
+
+  const handleMarkReportAsSent = async (actionId: string) => {
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      await updateActiveAction(actionId, { ultimo_relatorio: today })
+      await loadActiveActions()
+      toast.success('Relatório marcado como enviado!')
+    } catch {
+      toast.error('Erro ao atualizar relatório.')
+    }
+  }
+
   const currentActionForModal = selectedClientForAction
     ? activeActions.find((a) => a.client_name === selectedClientForAction.clienteUnificado)
     : null
+
+  const reportCalc = reportAction ? (planCalculations.get(reportAction.client_name) ?? null) : null
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors duration-200">
@@ -131,14 +196,11 @@ export default function Dashboard() {
         lastUpdated={lastUpdated}
       />
 
-      {/* Main Content with Dynamic Zoom Scale */}
       <main
         className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6"
         style={{ zoom: `${zoom}%` }}
       >
-        {/* Month Tabs & Filter Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card border rounded-xl p-3 shadow-sm">
-          {/* Month / Tab Selector */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
             <Calendar className="h-4 w-4 text-emerald-500 shrink-0 ml-1 mr-1" />
             {SHEET_MONTHS.map((month) => (
@@ -158,11 +220,9 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Secondary Filters */}
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
             <Filter className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
 
-            {/* Executive Filter */}
             <Select value={selectedExecutive} onValueChange={setSelectedExecutive}>
               <SelectTrigger className="h-8 text-xs w-[140px]">
                 <SelectValue placeholder="Executivo" />
@@ -177,7 +237,6 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
 
-            {/* Regional Filter */}
             <Select value={selectedRegional} onValueChange={setSelectedRegional}>
               <SelectTrigger className="h-8 text-xs w-[130px]">
                 <SelectValue placeholder="Regional" />
@@ -208,21 +267,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* KPI Cards */}
         <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
 
-        {/* BI Visual Charts */}
         <ChartsSection data={displayData} />
 
-        {/* Interactive Data Table */}
         <DataTable
           data={displayData}
           activeActions={activeActions}
+          planCalculations={planCalculations}
           onOpenActionModal={handleOpenActionModal}
+          onGenerateReport={handleGenerateReport}
+          onDeleteAction={handleDeleteAction}
         />
       </main>
 
-      {/* Action Registration Modal */}
       <ActionModal
         isOpen={isActionModalOpen}
         onClose={() => setIsActionModalOpen(false)}
@@ -232,13 +290,20 @@ export default function Dashboard() {
         onSaved={loadActiveActions}
       />
 
-      {/* Google Sheets Settings Modal */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         spreadsheetId={spreadsheetId}
         setSpreadsheetId={setSpreadsheetId}
         onReload={loadSheetData}
+      />
+
+      <ReportDialog
+        isOpen={!!reportAction}
+        onClose={() => setReportAction(null)}
+        action={reportAction}
+        calc={reportCalc}
+        onMarkAsSent={handleMarkReportAsSent}
       />
     </div>
   )

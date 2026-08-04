@@ -14,9 +14,6 @@ import {
   CartesianGrid,
   Legend,
   Cell,
-  ComposedChart,
-  Line,
-  ReferenceLine,
 } from 'recharts'
 
 interface ChartsSectionProps {
@@ -125,6 +122,21 @@ export function ChartsSection({ data }: ChartsSectionProps) {
         pct: total > 0 ? parseFloat(((cumul / total) * 100).toFixed(1)) : 0,
       }
     })
+  }, [data])
+
+  const agencyRepData = useMemo(() => {
+    const clients = data
+      .filter((c) => c.venda !== null && c.venda > 0)
+      .map((c) => ({
+        name: c.clienteUnificado,
+        venda: c.venda as number,
+      }))
+      .sort((a, b) => b.venda - a.venda)
+    const total = clients.reduce((sum, c) => sum + c.venda, 0)
+    return clients.map((c) => ({
+      name: c.name,
+      pct: total > 0 ? parseFloat(((c.venda / total) * 100).toFixed(1)) : 0,
+    }))
   }, [data])
 
   const paretoCardData = paretoAll.slice(0, 8)
@@ -263,7 +275,7 @@ export function ChartsSection({ data }: ChartsSectionProps) {
       </Card>
 
       <Card className="shadow-sm flex flex-col md:col-span-2 lg:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <CardHeader className="pb-2 space-y-0">
           <div>
             <CardTitle className="text-sm font-bold flex items-center gap-1.5">
               <PieChart className="h-4 w-4 text-amber-500" />
@@ -275,63 +287,24 @@ export function ChartsSection({ data }: ChartsSectionProps) {
                 : 'Concentração de receita por cliente'}
             </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setExpandedChart('pareto')}
-          >
-            <Maximize2 className="h-3.5 w-3.5" />
-          </Button>
         </CardHeader>
         <CardContent className="pt-2 flex-1 min-h-[260px]">
-          {paretoAll.length > 0 ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart
-                data={paretoCardData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  angle={-30}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                />
-                <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 10 }}
-                  domain={[0, 100]}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  yAxisId="left"
-                  dataKey="venda"
-                  name="Venda"
-                  fill="#10b981"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="pct"
-                  name="% Acumulado"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-                <ReferenceLine yAxisId="right" y={80} stroke="#ef4444" strokeDasharray="5 5" />
-              </ComposedChart>
-            </ResponsiveContainer>
+          {agencyRepData.length > 0 ? (
+            <div className="max-h-[260px] overflow-y-auto space-y-0.5 pr-1">
+              {agencyRepData.map((item, idx) => (
+                <div
+                  key={`${item.name}-${idx}`}
+                  className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors text-xs"
+                >
+                  <span className="font-medium truncate flex-1" title={item.name}>
+                    {item.name}
+                  </span>
+                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                    {item.pct}%
+                  </span>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="flex items-center justify-center h-[260px] text-sm text-muted-foreground">
               Sem dados de venda disponíveis nesta aba.
@@ -379,39 +352,6 @@ export function ChartsSection({ data }: ChartsSectionProps) {
               ))}
             </Bar>
           </BarChart>
-        </ResponsiveContainer>
-      </ChartModal>
-
-      <ChartModal
-        isOpen={expandedChart === 'pareto'}
-        onClose={() => setExpandedChart(null)}
-        title="Análise 80/20 da Carteira (Ampliado)"
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={paretoAll} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" angle={-30} textAnchor="end" height={80} interval={0} />
-            <YAxis yAxisId="left" tickFormatter={(v) => formatCurrency(v)} />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={[0, 100]}
-              tickFormatter={(v) => `${v}%`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar yAxisId="left" dataKey="venda" name="Venda" fill="#10b981" radius={[4, 4, 0, 0]} />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="pct"
-              name="% Acumulado"
-              stroke="#f59e0b"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-            <ReferenceLine yAxisId="right" y={80} stroke="#ef4444" strokeDasharray="5 5" />
-          </ComposedChart>
         </ResponsiveContainer>
       </ChartModal>
     </div>
