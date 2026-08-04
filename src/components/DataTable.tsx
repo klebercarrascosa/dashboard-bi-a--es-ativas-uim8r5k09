@@ -30,7 +30,6 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
-  // Filtered & Sorted Rows
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
     return data.filter(
@@ -49,6 +48,9 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
       if (typeof valA === 'number' && typeof valB === 'number') {
         return sortDirection === 'asc' ? valA - valB : valB - valA
       }
+      if (valA === null && valB !== null) return 1
+      if (valA !== null && valB === null) return -1
+      if (valA === null && valB === null) return 0
       return sortDirection === 'asc'
         ? String(valA).localeCompare(String(valB))
         : String(valB).localeCompare(String(valA))
@@ -86,10 +88,10 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
       `"${r.executivo}"`,
       `"${r.cpfCnpj}"`,
       `"${r.regional}"`,
-      r.venda,
-      r.vendaLY,
-      r.deltaLY,
-      `${r.pctYoY}%`,
+      r.venda ?? '',
+      r.vendaLY ?? '',
+      r.deltaLY ?? '',
+      r.pctYoY !== null ? `${r.pctYoY}%` : '',
     ])
     const csvContent =
       'data:text/csv;charset=utf-8,\uFEFF' +
@@ -219,7 +221,8 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
               ) : (
                 paginatedData.map((row) => {
                   const action = getActionForClient(row.clienteUnificado)
-                  const isPositive = row.deltaLY >= 0
+                  const isPositive = row.deltaLY !== null && row.deltaLY >= 0
+                  const hasDelta = row.deltaLY !== null
 
                   return (
                     <tr key={row.id} className="hover:bg-muted/30 transition-colors">
@@ -245,21 +248,31 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
                         {formatCurrency(row.vendaLY)}
                       </td>
                       <td
-                        className={`py-3 px-4 text-right font-mono font-semibold ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+                        className={`py-3 px-4 text-right font-mono font-semibold ${
+                          !hasDelta
+                            ? 'text-muted-foreground'
+                            : isPositive
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400'
+                        }`}
                       >
                         {formatCurrency(row.deltaLY)}
                       </td>
                       <td className="py-3 px-4 text-right font-mono">
-                        <span
-                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}
-                        >
-                          {isPositive ? (
-                            <TrendingUp className="h-3 w-3" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3" />
-                          )}
-                          {formatPercent(row.pctYoY)}
-                        </span>
+                        {hasDelta ? (
+                          <span
+                            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}
+                          >
+                            {isPositive ? (
+                              <TrendingUp className="h-3 w-3" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3" />
+                            )}
+                            {formatPercent(row.pctYoY)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-[11px]">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center">
                         {action ? (
@@ -292,7 +305,6 @@ export function DataTable({ data, activeActions, onOpenActionModal }: DataTableP
           </table>
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex items-center justify-between px-4 py-3 border-t text-xs text-muted-foreground">
           <p>
             Página {currentPage} de {totalPages} ({sortedData.length} itens)

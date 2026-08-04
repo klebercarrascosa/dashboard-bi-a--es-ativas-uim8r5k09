@@ -4,10 +4,10 @@ export interface SheetRow {
   executivo: string
   cpfCnpj: string
   regional: string
-  venda: number
-  vendaLY: number
-  deltaLY: number
-  pctYoY: number
+  venda: number | null
+  vendaLY: number | null
+  deltaLY: number | null
+  pctYoY: number | null
 }
 
 export const DEFAULT_SPREADSHEET_ID = '1Tl8GvNv9wemusqhNSLGr689EdYu1_u1WToLnPoEqTO0'
@@ -26,31 +26,6 @@ export const SHEET_MONTHS = [
   'Outubro',
   'Novembro',
   'Dezembro',
-]
-
-const REGIONAIS = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul']
-const EXECUTIVOS = [
-  'Carlos Silva',
-  'Mariana Santos',
-  'Roberto Oliveira',
-  'Fernanda Lima',
-  'Lucas Almeida',
-  'Juliana Rocha',
-  'Gabriel Costa',
-]
-const CLIENTES = [
-  'Atacadão Global S/A',
-  'Varejo Express Ltda',
-  'Distribuidora do Sul',
-  'Mega Mercado Brasil',
-  'Comércio Horizonte',
-  'Rede Integração',
-  'Logística & Cia',
-  'Supermercados Primus',
-  'Empreendimentos Alfa',
-  'Grupo Delta Comercial',
-  'Nacional Suprimentos',
-  'Soluções Corporativas',
 ]
 
 function parseCSVLine(text: string): string[] {
@@ -72,8 +47,8 @@ function parseCSVLine(text: string): string[] {
   return result
 }
 
-function parseFormattedNumber(val: string): number {
-  if (!val) return 0
+function parseFormattedNumber(val: string): number | null {
+  if (!val || val.trim() === '') return null
   const clean = val
     .replace(/R\$\s?/, '')
     .replace(/\s/g, '')
@@ -81,41 +56,7 @@ function parseFormattedNumber(val: string): number {
     .replace(/\./g, '')
     .replace(',', '.')
   const num = parseFloat(clean)
-  return isNaN(num) ? 0 : num
-}
-
-export function generateMockSheetData(sheetName: string): SheetRow[] {
-  const seed =
-    sheetName.length +
-    (SHEET_MONTHS.indexOf(sheetName) >= 0 ? SHEET_MONTHS.indexOf(sheetName) * 7 : 42)
-  const rows: SheetRow[] = []
-
-  CLIENTES.forEach((client, idx) => {
-    const regional = REGIONAIS[(idx + seed) % REGIONAIS.length]
-    const executivo = EXECUTIVOS[(idx * 3 + seed) % EXECUTIVOS.length]
-    const baseVenda = 45000 + ((idx * 13700 + seed * 9973) % 280000)
-    const growthFactor = 0.82 + ((idx * 19 + seed * 3) % 45) / 100
-    const vendaLY = Math.round(baseVenda * growthFactor)
-    const venda = Math.round(baseVenda)
-    const deltaLY = venda - vendaLY
-    const pctYoY = vendaLY > 0 ? ((venda - vendaLY) / vendaLY) * 100 : 0
-
-    const formattedCpfCnpj = `${((idx + 1) * 11111111).toString().slice(0, 8)}0001${((idx + 1) * 9).toString().padStart(2, '0')}`
-
-    rows.push({
-      id: `${sheetName}-${idx}`,
-      clienteUnificado: client,
-      executivo,
-      cpfCnpj: formattedCpfCnpj,
-      regional,
-      venda,
-      vendaLY,
-      deltaLY,
-      pctYoY: parseFloat(pctYoY.toFixed(2)),
-    })
-  })
-
-  return rows
+  return isNaN(num) ? null : num
 }
 
 export async function fetchGoogleSheetData(
@@ -134,7 +75,7 @@ export async function fetchGoogleSheetData(
     const lines = csvText.split('\n').filter((l) => l.trim().length > 0)
 
     if (lines.length < 2) {
-      return generateMockSheetData(sheetName)
+      return []
     }
 
     const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().trim())
@@ -157,45 +98,59 @@ export async function fetchGoogleSheetData(
       const cols = parseCSVLine(lines[i])
       if (cols.length === 0 || !cols.some((c) => c.trim().length > 0)) continue
 
-      const cliente = idxCliente >= 0 ? cols[idxCliente] : `Cliente ${i}`
-      const executivo = idxExecutivo >= 0 ? cols[idxExecutivo] : 'Executivo Geral'
-      const cpfCnpj = idxCpfCnpj >= 0 ? cols[idxCpfCnpj] : '00.000.000/0001-00'
-      const regional = idxRegional >= 0 ? cols[idxRegional] : 'Sudeste'
-      const venda = idxVenda >= 0 ? parseFormattedNumber(cols[idxVenda]) : 100000
-      const vendaLY = idxVendaLY >= 0 ? parseFormattedNumber(cols[idxVendaLY]) : 90000
+      const cliente = idxCliente >= 0 ? cols[idxCliente]?.trim() || '' : ''
+      if (!cliente) continue
 
-      let deltaLY = idxDeltaLY >= 0 ? parseFormattedNumber(cols[idxDeltaLY]) : venda - vendaLY
-      if (isNaN(deltaLY)) deltaLY = venda - vendaLY
+      const executivo = idxExecutivo >= 0 ? cols[idxExecutivo]?.trim() || '' : ''
+      const cpfCnpj = idxCpfCnpj >= 0 ? cols[idxCpfCnpj]?.trim() || '' : ''
+      const regional = idxRegional >= 0 ? cols[idxRegional]?.trim() || '' : ''
 
-      let pctYoY =
-        idxPctYoY >= 0
-          ? parseFormattedNumber(cols[idxPctYoY])
-          : vendaLY > 0
-            ? ((venda - vendaLY) / vendaLY) * 100
-            : 0
-      if (isNaN(pctYoY)) pctYoY = vendaLY > 0 ? ((venda - vendaLY) / vendaLY) * 100 : 0
+      const venda = idxVenda >= 0 ? parseFormattedNumber(cols[idxVenda] || '') : null
+      const vendaLY = idxVendaLY >= 0 ? parseFormattedNumber(cols[idxVendaLY] || '') : null
+
+      let deltaLY: number | null = null
+      let pctYoY: number | null = null
+
+      if (venda !== null && vendaLY !== null) {
+        if (idxDeltaLY >= 0) {
+          const parsedDelta = parseFormattedNumber(cols[idxDeltaLY] || '')
+          deltaLY = parsedDelta !== null ? parsedDelta : venda - vendaLY
+        } else {
+          deltaLY = venda - vendaLY
+        }
+
+        if (idxPctYoY >= 0) {
+          const parsedPct = parseFormattedNumber(cols[idxPctYoY] || '')
+          pctYoY =
+            parsedPct !== null ? parsedPct : vendaLY > 0 ? ((venda - vendaLY) / vendaLY) * 100 : 0
+        } else {
+          pctYoY = vendaLY > 0 ? ((venda - vendaLY) / vendaLY) * 100 : 0
+        }
+        pctYoY = parseFloat(pctYoY.toFixed(2))
+      }
 
       parsedRows.push({
         id: `row-${i}`,
-        clienteUnificado: cliente || `Cliente ${i}`,
-        executivo: executivo || 'Geral',
+        clienteUnificado: cliente,
+        executivo: executivo || 'N/A',
         cpfCnpj: cpfCnpj || 'N/A',
         regional: regional || 'N/A',
         venda,
         vendaLY,
         deltaLY,
-        pctYoY: parseFloat(pctYoY.toFixed(2)),
+        pctYoY,
       })
     }
 
-    return parsedRows.length > 0 ? parsedRows : generateMockSheetData(sheetName)
+    return parsedRows
   } catch (err) {
-    console.warn('Fallback to mock sheet data due to fetch error:', err)
-    return generateMockSheetData(sheetName)
+    console.warn('Failed to fetch Google Sheet data:', err)
+    return []
   }
 }
 
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number | null): string {
+  if (value === null || value === undefined) return '—'
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -203,7 +158,8 @@ export function formatCurrency(value: number): string {
   }).format(value)
 }
 
-export function formatPercent(value: number): string {
+export function formatPercent(value: number | null): string {
+  if (value === null || value === undefined) return '—'
   const prefix = value > 0 ? '+' : ''
   return `${prefix}${value.toFixed(1)}%`
 }
@@ -232,10 +188,23 @@ export function aggregateSheetRowsByClient(rows: SheetRow[]): SheetRow[] {
   const result: SheetRow[] = []
 
   for (const [key, groupRows] of groups) {
-    const totalVenda = groupRows.reduce((sum, r) => sum + r.venda, 0)
-    const totalVendaLY = groupRows.reduce((sum, r) => sum + r.vendaLY, 0)
-    const deltaLY = totalVenda - totalVendaLY
-    const pctYoY = totalVendaLY > 0 ? ((totalVenda - totalVendaLY) / totalVendaLY) * 100 : 0
+    const vendaValues = groupRows.map((r) => r.venda).filter((v): v is number => v !== null)
+    const vendaLYValues = groupRows.map((r) => r.vendaLY).filter((v): v is number => v !== null)
+
+    const totalVenda = vendaValues.length > 0 ? vendaValues.reduce((sum, v) => sum + v, 0) : null
+    const totalVendaLY =
+      vendaLYValues.length > 0 ? vendaLYValues.reduce((sum, v) => sum + v, 0) : null
+
+    let deltaLY: number | null = null
+    let pctYoY: number | null = null
+
+    if (totalVenda !== null && totalVendaLY !== null) {
+      deltaLY = totalVenda - totalVendaLY
+      pctYoY =
+        totalVendaLY > 0
+          ? parseFloat((((totalVenda - totalVendaLY) / totalVendaLY) * 100).toFixed(2))
+          : 0
+    }
 
     const execCounts = new Map<string, number>()
     const regCounts = new Map<string, number>()
@@ -257,7 +226,7 @@ export function aggregateSheetRowsByClient(rows: SheetRow[]): SheetRow[] {
       venda: totalVenda,
       vendaLY: totalVendaLY,
       deltaLY,
-      pctYoY: parseFloat(pctYoY.toFixed(2)),
+      pctYoY,
     })
   }
 
