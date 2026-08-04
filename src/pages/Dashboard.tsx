@@ -7,6 +7,8 @@ import { ActionModal } from '@/components/ActionModal'
 import { SettingsModal } from '@/components/SettingsModal'
 import { ReportDialog } from '@/components/ReportDialog'
 import { ClientDetailDialog } from '@/components/ClientDetailDialog'
+import { ActivePlansView } from '@/components/ActivePlansView'
+import { ActivePlansView } from '@/components/ActivePlansView'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -59,8 +61,14 @@ export default function Dashboard() {
 
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
-    setSheetData([])
     try {
+      if (activeTab === 'Planos de Meta Ativos') {
+        setSheetData([])
+        setLastUpdated(new Date())
+        setIsRefreshing(false)
+        return
+      }
+      setSheetData([])
       if (activeTab === 'Visão Geral') {
         const months = SHEET_MONTHS.filter((m) => m !== 'Visão Geral')
         const results = await Promise.all(months.map((m) => fetchGoogleSheetData(spreadsheetId, m)))
@@ -224,6 +232,18 @@ export default function Dashboard() {
                 {month}
               </Button>
             ))}
+            <Button
+              variant={activeTab === 'Planos de Meta Ativos' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('Planos de Meta Ativos')}
+              className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
+                activeTab === 'Planos de Meta Ativos'
+                  ? 'bg-primary text-primary-foreground font-bold shadow'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Planos de Meta Ativos
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
@@ -273,19 +293,29 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
+        {activeTab === 'Planos de Meta Ativos' ? (
+          <ActivePlansView activeActions={activeActions} planCalculations={planCalculations} />
+        ) : (
+          <>
+            <KPICards data={displayData} activeTab={activeTab} activeActions={activeActions} />
 
-        <ChartsSection data={displayData} />
+            <ChartsSection
+              data={displayData}
+              activeActions={activeActions}
+              planCalculations={planCalculations}
+            />
 
-        <DataTable
-          data={displayData}
-          activeActions={activeActions}
-          planCalculations={planCalculations}
-          onOpenActionModal={handleOpenActionModal}
-          onGenerateReport={handleGenerateReport}
-          onDeleteAction={handleDeleteAction}
-          onClientClick={handleClientClick}
-        />
+            <DataTable
+              data={displayData}
+              activeActions={activeActions}
+              planCalculations={planCalculations}
+              onOpenActionModal={handleOpenActionModal}
+              onGenerateReport={handleGenerateReport}
+              onDeleteAction={handleDeleteAction}
+              onClientClick={handleClientClick}
+            />
+          </>
+        )}
       </main>
 
       <ActionModal
