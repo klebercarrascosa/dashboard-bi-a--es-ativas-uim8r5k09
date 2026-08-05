@@ -11,6 +11,8 @@ import { ClientPlansDetailDialog } from '@/components/ClientPlansDetailDialog'
 import { ActivePlansDashboard } from '@/components/ActivePlansDashboard'
 import { ExecutivePlansView } from '@/components/ExecutivePlansView'
 import { MyTeamDashboard } from '@/components/MyTeamDashboard'
+import { ActivePlansRanking } from '@/components/ActivePlansRanking'
+import { ActivePlansKpi } from '@/components/ActivePlansKpi'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -85,7 +87,8 @@ export default function Dashboard() {
       if (
         activeTab === 'Planos Ativos' ||
         activeTab === 'Planos por Executivo' ||
-        activeTab === 'Meu time'
+        activeTab === 'Meu time' ||
+        activeTab === 'Ranking de Planos'
       ) {
         setSheetData([])
         setLastUpdated(new Date())
@@ -185,8 +188,7 @@ export default function Dashboard() {
   }, [roleFilteredActions, monthDataMap])
 
   const actionsCoveringMonth = useMemo(() => {
-    if (activeTab === 'Visão Geral' || activeTab === 'Planos de Meta Ativos')
-      return roleFilteredActions
+    if (activeTab === 'Visão Geral') return roleFilteredActions
     return getActionsCoveringMonth(roleFilteredActions, activeTab)
   }, [roleFilteredActions, activeTab])
 
@@ -359,6 +361,18 @@ export default function Dashboard() {
             >
               Por Executivo
             </Button>
+            <Button
+              variant={activeTab === 'Ranking de Planos' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('Ranking de Planos')}
+              className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
+                activeTab === 'Ranking de Planos'
+                  ? 'bg-primary text-primary-foreground font-bold shadow'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Ranking de Planos
+            </Button>
             {isAdmin && (
               <Button
                 variant={activeTab === 'Meu time' ? 'default' : 'ghost'}
@@ -452,9 +466,13 @@ export default function Dashboard() {
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
           />
+        ) : activeTab === 'Ranking de Planos' ? (
+          <ActivePlansRanking activeActions={activeOnlyActions} today={today} />
         ) : (
           <>
             <KPICards data={displayData} activeTab={activeTab} />
+
+            <ActivePlansKpi activeActions={activeOnlyActions} today={today} />
 
             <ChartsSection data={displayData} />
 
