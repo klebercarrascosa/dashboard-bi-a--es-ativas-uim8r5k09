@@ -11,6 +11,7 @@ import { ClientPlansDetailDialog } from '@/components/ClientPlansDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
 import { ExecutivePlansKPI } from '@/components/ExecutivePlansKPI'
 import { ExecutivePlansView } from '@/components/ExecutivePlansView'
+import { MyTeamDashboard } from '@/components/MyTeamDashboard'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -84,7 +85,11 @@ export default function Dashboard() {
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      if (activeTab === 'Planos de Meta Ativos' || activeTab === 'Planos por Executivo') {
+      if (
+        activeTab === 'Planos de Meta Ativos' ||
+        activeTab === 'Planos por Executivo' ||
+        activeTab === 'Meu time'
+      ) {
         setSheetData([])
         setLastUpdated(new Date())
         setIsRefreshing(false)
@@ -368,6 +373,18 @@ export default function Dashboard() {
             >
               Por Executivo
             </Button>
+            <Button
+              variant={activeTab === 'Meu time' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('Meu time')}
+              className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
+                activeTab === 'Meu time'
+                  ? 'bg-primary text-primary-foreground font-bold shadow'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Meu time
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
@@ -469,6 +486,15 @@ export default function Dashboard() {
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
             initialExec={planosExecInitialExec}
+          />
+        ) : activeTab === 'Meu time' ? (
+          <MyTeamDashboard
+            activeActions={filteredActiveActions}
+            planCalculations={planCalculations}
+            today={today}
+            onClientClick={setPlanDetailClientName}
+            onEditAction={handleEditAction}
+            onGenerateReport={handleGenerateReport}
           />
         ) : (
           <>
