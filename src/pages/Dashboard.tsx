@@ -14,6 +14,8 @@ import { MyTeamDashboard } from '@/components/MyTeamDashboard'
 import { ActivePlansRanking } from '@/components/ActivePlansRanking'
 import { ActivePlansKpi } from '@/components/ActivePlansKpi'
 import { ActiveAgenciesKpi } from '@/components/ActiveAgenciesKpi'
+import { CondicaoKpi } from '@/components/CondicaoKpi'
+import { CondicaoClientsTable } from '@/components/CondicaoClientsTable'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -163,14 +165,16 @@ export default function Dashboard() {
     if (!user) return []
     if (isAdmin) return sheetData
     if (!userExecutiveName) return []
-    return sheetData.filter((row) => row.executivo === userExecutiveName)
+    const execNameLower = userExecutiveName.toLowerCase().trim()
+    return sheetData.filter((row) => (row.executivo || '').toLowerCase().trim() === execNameLower)
   }, [sheetData, isAdmin, userExecutiveName, user])
 
   const roleFilteredActions = useMemo(() => {
     if (!user) return []
     if (isAdmin) return activeActions
     if (!userExecutiveName) return []
-    return activeActions.filter((a) => a.executive === userExecutiveName)
+    const execNameLower = userExecutiveName.toLowerCase().trim()
+    return activeActions.filter((a) => (a.executive || '').toLowerCase().trim() === execNameLower)
   }, [activeActions, isAdmin, userExecutiveName, user])
 
   const planCalculations = useMemo(() => {
@@ -468,20 +472,25 @@ export default function Dashboard() {
             onGenerateReport={handleGenerateReport}
           />
         ) : activeTab === 'Ranking de Planos' ? (
-          <ActivePlansRanking activeActions={activeOnlyActions} today={today} />
+          <ActivePlansRanking activeActions={activeOnlyActions} today={today} isAdmin={isAdmin} />
         ) : (
           <>
             <KPICards data={displayData} activeTab={activeTab} />
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <ActivePlansKpi activeActions={activeOnlyActions} today={today} />
-                <ActiveAgenciesKpi activeActions={activeOnlyActions} today={today} />
-              </div>
-              <ActiveAgenciesKpi activeActions={activeOnlyActions} today={today} />
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              <ActivePlansKpi activeActions={activeOnlyActions} today={today} isAdmin={isAdmin} />
+              <ActiveAgenciesKpi
+                activeActions={activeOnlyActions}
+                today={today}
+                isAdmin={isAdmin}
+              />
+              <CondicaoKpi activeActions={roleFilteredActions} />
             </div>
 
-            <ChartsSection data={displayData} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ChartsSection data={displayData} />
+              <CondicaoClientsTable activeActions={roleFilteredActions} />
+            </div>
 
             <DataTable
               data={displayData}

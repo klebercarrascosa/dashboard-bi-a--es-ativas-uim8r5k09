@@ -15,9 +15,10 @@ import { Flag, Users, Trophy, BarChart3, Filter } from 'lucide-react'
 interface ActivePlansRankingProps {
   activeActions: ActiveAction[]
   today: string
+  isAdmin: boolean
 }
 
-export function ActivePlansRanking({ activeActions, today }: ActivePlansRankingProps) {
+export function ActivePlansRanking({ activeActions, today, isAdmin }: ActivePlansRankingProps) {
   const [selectedExec, setSelectedExec] = useState<string>('all')
 
   const executives = useMemo(
@@ -109,32 +110,34 @@ export function ActivePlansRanking({ activeActions, today }: ActivePlansRankingP
         </Card>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <Select value={selectedExec} onValueChange={setSelectedExec}>
-          <SelectTrigger className="h-8 text-xs w-[220px]">
-            <SelectValue placeholder="Filtrar por executivo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Executivos</SelectItem>
-            {executives.map((exec) => (
-              <SelectItem key={exec} value={exec}>
-                {exec}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedExec !== 'all' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedExec('all')}
-            className="h-8 text-xs text-destructive hover:bg-destructive/10"
-          >
-            Limpar filtro
-          </Button>
-        )}
-      </div>
+      {isAdmin && (
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedExec} onValueChange={setSelectedExec}>
+            <SelectTrigger className="h-8 text-xs w-[220px]">
+              <SelectValue placeholder="Filtrar por executivo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Executivos</SelectItem>
+              {executives.map((exec) => (
+                <SelectItem key={exec} value={exec}>
+                  {exec}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedExec !== 'all' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedExec('all')}
+              className="h-8 text-xs text-destructive hover:bg-destructive/10"
+            >
+              Limpar filtro
+            </Button>
+          )}
+        </div>
+      )}
 
       <Card className="shadow-sm flex flex-col">
         <CardHeader className="pb-2 space-y-0">

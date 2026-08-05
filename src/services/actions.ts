@@ -26,6 +26,7 @@ export interface ActiveAction {
   pagamento_trimestral?: boolean
   bonus_anual?: boolean
   tipo_meta?: string[]
+  condicao?: 'GOL' | 'LATAM' | 'AZUL TOP'
   created?: string
   updated?: string
 }

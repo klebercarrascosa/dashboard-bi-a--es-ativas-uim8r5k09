@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-05T15:25:38.755Z",
+  "generatedAt": "2026-08-05T15:55:28.603Z",
   "collections": [
     {
       "name": "users",
@@ -230,6 +230,13 @@
           "required": false,
           "system": false,
           "selectValues": ["Geral", "Por Cia"]
+        },
+        {
+          "name": "condicao",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["GOL", "LATAM", "AZUL TOP"]
         }
       ],
       "indexes": [

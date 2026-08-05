@@ -193,20 +193,22 @@ export function DataTable({
     if (val === null) return <span className="text-muted-foreground">—</span>
     if (val <= 0)
       return (
-        <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] whitespace-nowrap">
           ✅ Meta Atingida
         </span>
       )
     return (
-      <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">
+      <span className="font-mono font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
         {formatCurrency(val)}
       </span>
     )
   }
 
+  const thBase = 'py-2.5 px-3 text-xs font-semibold uppercase tracking-wider whitespace-nowrap'
+
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4">
+    <Card className="shadow-sm border-emerald-500/20">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent rounded-t-lg">
         <div>
           <CardTitle className="text-base font-bold flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
@@ -246,15 +248,15 @@ export function DataTable({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1900px]">
-            <thead className="bg-muted/50 text-muted-foreground border-y font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-xs min-w-[1500px] border-collapse">
+            <thead className="bg-muted/50 text-muted-foreground border-y">
               <tr>
-                <th className="py-3 px-4">Cliente Unificado</th>
-                <th className="py-3 px-4">Executivo</th>
-                <th className="py-3 px-4">CPF / CNPJ</th>
-                <th className="py-3 px-4">Regional</th>
+                <th className={`${thBase}`}>Cliente Unificado</th>
+                <th className={`${thBase}`}>Executivo</th>
+                <th className={`${thBase}`}>CPF / CNPJ</th>
+                <th className={`${thBase}`}>Regional</th>
                 <th
-                  className="py-3 px-4 text-right cursor-pointer hover:bg-muted"
+                  className={`${thBase} text-right cursor-pointer hover:bg-muted`}
                   onClick={() => handleSort('venda')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -262,7 +264,7 @@ export function DataTable({
                   </div>
                 </th>
                 <th
-                  className="py-3 px-4 text-right cursor-pointer hover:bg-muted"
+                  className={`${thBase} text-right cursor-pointer hover:bg-muted`}
                   onClick={() => handleSort('vendaLY')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -270,7 +272,7 @@ export function DataTable({
                   </div>
                 </th>
                 <th
-                  className="py-3 px-4 text-right cursor-pointer hover:bg-muted"
+                  className={`${thBase} text-right cursor-pointer hover:bg-muted`}
                   onClick={() => handleSort('deltaLY')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -278,23 +280,23 @@ export function DataTable({
                   </div>
                 </th>
                 <th
-                  className="py-3 px-4 text-right cursor-pointer hover:bg-muted"
+                  className={`${thBase} text-right cursor-pointer hover:bg-muted`}
                   onClick={() => handleSort('pctYoY')}
                 >
                   <div className="flex items-center justify-end gap-1">
                     % YoY <ArrowUpDown className="h-3 w-3" />
                   </div>
                 </th>
-                <th className="py-3 px-4 text-center">Início</th>
-                <th className="py-3 px-4 text-center">Fim</th>
-                <th className="py-3 px-4 text-right">Meta 1 (R$)</th>
-                <th className="py-3 px-4 text-right">Meta 2 (R$)</th>
-                <th className="py-3 px-4 text-right">Meta 3 (R$)</th>
-                <th className="py-3 px-4 text-right">Soma Vendida</th>
-                <th className="py-3 px-4 text-right">Quanto Falta</th>
-                <th className="py-3 px-4 text-right">Quanto Falta (M2)</th>
-                <th className="py-3 px-4 text-right">Quanto Falta (M3)</th>
-                <th className="py-3 px-4 text-center">Plano / Relatório</th>
+                <th className={`${thBase} text-center border-l border-muted`}>Início</th>
+                <th className={`${thBase} text-center`}>Fim</th>
+                <th className={`${thBase} text-right border-l border-muted`}>Meta 1 (R$)</th>
+                <th className={`${thBase} text-right`}>Meta 2 (R$)</th>
+                <th className={`${thBase} text-right`}>Meta 3 (R$)</th>
+                <th className={`${thBase} text-right border-l border-muted`}>Soma Vendida</th>
+                <th className={`${thBase} text-right`}>Falta (M1)</th>
+                <th className={`${thBase} text-right`}>Falta (M2)</th>
+                <th className={`${thBase} text-right`}>Falta (M3)</th>
+                <th className={`${thBase} text-center border-l border-muted`}>Plano / Relatório</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -312,38 +314,39 @@ export function DataTable({
                   const isPositive = row.deltaLY !== null && row.deltaLY >= 0
                   const hasDelta = row.deltaLY !== null
                   const hasDates = !!(action?.data_inicio && action?.data_fim)
+                  const tdBase = 'py-2.5 px-3 whitespace-nowrap'
                   return (
                     <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                       <td
-                        className="py-3 px-4 font-semibold text-foreground max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
+                        className={`${tdBase} font-semibold text-foreground max-w-[280px] overflow-hidden text-ellipsis cursor-pointer hover:text-primary transition-colors`}
                         title={row.clienteUnificado}
                         onClick={() => onClientClick?.(row)}
                       >
-                        <span className="underline-offset-2 hover:underline">
-                          {row.clienteUnificado}
-                        </span>
+                        {row.clienteUnificado}
                       </td>
-                      <td className="py-3 px-4 text-muted-foreground">{row.executivo}</td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-muted-foreground">
+                      <td className={`${tdBase} text-muted-foreground`}>{row.executivo}</td>
+                      <td className={`${tdBase} font-mono text-[11px] text-muted-foreground`}>
                         {row.cpfCnpj}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className={`${tdBase}`}>
                         <Badge variant="outline" className="font-normal text-[10px] bg-slate-500/5">
                           {row.regional}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-right font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                      <td
+                        className={`${tdBase} text-right font-bold font-mono text-emerald-600 dark:text-emerald-400`}
+                      >
                         {formatCurrency(row.venda)}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-muted-foreground">
+                      <td className={`${tdBase} text-right font-mono text-muted-foreground`}>
                         {formatCurrency(row.vendaLY)}
                       </td>
                       <td
-                        className={`py-3 px-4 text-right font-mono font-semibold ${!hasDelta ? 'text-muted-foreground' : isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+                        className={`${tdBase} text-right font-mono font-semibold ${!hasDelta ? 'text-muted-foreground' : isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                       >
                         {formatCurrency(row.deltaLY)}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono">
+                      <td className={`${tdBase} text-right font-mono`}>
                         {hasDelta ? (
                           <span
                             className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}
@@ -359,50 +362,62 @@ export function DataTable({
                           <span className="text-muted-foreground text-[11px]">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center font-mono text-[11px] text-muted-foreground">
+                      <td
+                        className={`${tdBase} text-center font-mono text-[11px] text-muted-foreground border-l border-muted`}
+                      >
                         {action ? formatDateBR(action.data_inicio) : '—'}
                       </td>
-                      <td className="py-3 px-4 text-center font-mono text-[11px] text-muted-foreground">
+                      <td
+                        className={`${tdBase} text-center font-mono text-[11px] text-muted-foreground`}
+                      >
                         {action ? formatDateBR(action.data_fim) : '—'}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-amber-600 dark:text-amber-400">
+                      <td
+                        className={`${tdBase} text-right font-mono font-semibold text-amber-600 dark:text-amber-400 border-l border-muted`}
+                      >
                         {action?.valor_meta ? formatCurrency(action.valor_meta) : '—'}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-blue-600 dark:text-blue-400">
+                      <td
+                        className={`${tdBase} text-right font-mono font-semibold text-blue-600 dark:text-blue-400`}
+                      >
                         {action?.meta_2 ? formatCurrency(action.meta_2) : '—'}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-purple-600 dark:text-purple-400">
+                      <td
+                        className={`${tdBase} text-right font-mono font-semibold text-purple-600 dark:text-purple-400`}
+                      >
                         {action?.meta_3 ? formatCurrency(action.meta_3) : '—'}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold">
+                      <td
+                        className={`${tdBase} text-right font-mono font-semibold border-l border-muted`}
+                      >
                         {calc && hasDates ? (
                           formatCurrency(calc.somaVendida)
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className={`${tdBase} text-right`}>
                         {calc && hasDates ? (
                           renderQuantoFalta(calc.quantoFalta)
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className={`${tdBase} text-right`}>
                         {calc && hasDates ? (
                           renderQuantoFalta(calc.quantoFaltaMeta2)
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className={`${tdBase} text-right`}>
                         {calc && hasDates ? (
                           renderQuantoFalta(calc.quantoFaltaMeta3)
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className={`${tdBase} text-center border-l border-muted`}>
                         <div className="flex items-center justify-center gap-1">
                           {action ? (
                             <>

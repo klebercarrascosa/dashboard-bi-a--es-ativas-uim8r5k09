@@ -15,9 +15,10 @@ import { Flag, Filter, Building2 } from 'lucide-react'
 interface ActiveAgenciesKpiProps {
   activeActions: ActiveAction[]
   today: string
+  isAdmin: boolean
 }
 
-export function ActiveAgenciesKpi({ activeActions, today }: ActiveAgenciesKpiProps) {
+export function ActiveAgenciesKpi({ activeActions, today, isAdmin }: ActiveAgenciesKpiProps) {
   const [selectedExec, setSelectedExec] = useState<string>('all')
 
   const executives = useMemo(
@@ -58,32 +59,34 @@ export function ActiveAgenciesKpi({ activeActions, today }: ActiveAgenciesKpiPro
                 : `${totalAgencies} agência(s) ativa(s) para ${selectedExec}`}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
-            <Select value={selectedExec} onValueChange={setSelectedExec}>
-              <SelectTrigger className="h-8 text-xs w-[180px]">
-                <SelectValue placeholder="Executivo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Executivos</SelectItem>
-                {executives.map((exec) => (
-                  <SelectItem key={exec} value={exec}>
-                    {exec}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedExec !== 'all' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedExec('all')}
-                className="h-8 text-xs text-destructive hover:bg-destructive/10"
-              >
-                Limpar
-              </Button>
-            )}
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
+              <Select value={selectedExec} onValueChange={setSelectedExec}>
+                <SelectTrigger className="h-8 text-xs w-[180px]">
+                  <SelectValue placeholder="Executivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Executivos</SelectItem>
+                  {executives.map((exec) => (
+                    <SelectItem key={exec} value={exec}>
+                      {exec}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedExec !== 'all' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedExec('all')}
+                  className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="pt-2 flex-1 min-h-[200px]">

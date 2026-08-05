@@ -113,6 +113,7 @@ export function ActionModal({
   const [pagamentoTrimestral, setPagamentoTrimestral] = useState(false)
   const [bonusAnual, setBonusAnual] = useState(false)
   const [tipoMeta, setTipoMeta] = useState<string[]>(['Geral'])
+  const [condicao, setCondicao] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -151,6 +152,7 @@ export function ActionModal({
       setBonusAnual(existingAction.bonus_anual ?? false)
       const tm = existingAction.tipo_meta
       setTipoMeta(Array.isArray(tm) ? tm : tm ? [tm] : ['Geral'])
+      setCondicao(existingAction.condicao || '')
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -169,6 +171,7 @@ export function ActionModal({
       setPagamentoTrimestral(false)
       setBonusAnual(false)
       setTipoMeta(['Geral'])
+      setCondicao('')
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction?.id, client])
@@ -222,6 +225,7 @@ export function ActionModal({
         pagamento_trimestral: pagamentoTrimestral,
         bonus_anual: bonusAnual,
         tipo_meta: tipoMeta,
+        condicao: condicao || undefined,
       }
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)
@@ -499,6 +503,23 @@ export function ActionModal({
                   <SelectItem value="Alta">Alta 🔥</SelectItem>
                   <SelectItem value="Média">Média ⚡</SelectItem>
                   <SelectItem value="Baixa">Baixa 🍃</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Condição (Companhia Aérea)</Label>
+              <Select value={condicao} onValueChange={(val: string) => setCondicao(val)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Sem condição" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem condição</SelectItem>
+                  <SelectItem value="GOL">GOL</SelectItem>
+                  <SelectItem value="LATAM">LATAM</SelectItem>
+                  <SelectItem value="AZUL TOP">AZUL TOP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
