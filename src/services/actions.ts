@@ -25,6 +25,7 @@ export interface ActiveAction {
   pagamento_mensal?: boolean
   pagamento_trimestral?: boolean
   bonus_anual?: boolean
+  tipo_meta?: string[]
   created?: string
   updated?: string
 }

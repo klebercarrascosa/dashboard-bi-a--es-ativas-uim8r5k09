@@ -150,15 +150,17 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     pctAtingidoMeta3,
     isDue,
     nextDueDate,
-    ...calculateTierGain(action),
+    ...calculateTierGain(action, somaVendida),
   }
 }
 
-export function calculateTierGain(action: ActiveAction): {
+export function calculateTierGain(
+  action: ActiveAction,
+  somaVendida: number,
+): {
   ganhoPremio: number
   tierAlcancado: 0 | 1 | 2 | 3
 } {
-  const valorVendido = action.valor_vendido ?? 0
   const meta1 = action.valor_meta ?? 0
   const meta2 = action.meta_2 ?? 0
   const meta3 = action.meta_3 ?? 0
@@ -166,14 +168,14 @@ export function calculateTierGain(action: ActiveAction): {
   const premio2 = action.premio_meta_2 ?? 0
   const premio3 = action.premio_meta_3 ?? 0
 
-  if (meta3 > 0 && valorVendido >= meta3) {
-    return { ganhoPremio: valorVendido * (premio3 / 100), tierAlcancado: 3 }
+  if (meta3 > 0 && somaVendida >= meta3) {
+    return { ganhoPremio: somaVendida * (premio3 / 100), tierAlcancado: 3 }
   }
-  if (meta2 > 0 && valorVendido >= meta2) {
-    return { ganhoPremio: valorVendido * (premio2 / 100), tierAlcancado: 2 }
+  if (meta2 > 0 && somaVendida >= meta2) {
+    return { ganhoPremio: somaVendida * (premio2 / 100), tierAlcancado: 2 }
   }
-  if (meta1 > 0 && valorVendido >= meta1) {
-    return { ganhoPremio: valorVendido * (premio1 / 100), tierAlcancado: 1 }
+  if (meta1 > 0 && somaVendida >= meta1) {
+    return { ganhoPremio: somaVendida * (premio1 / 100), tierAlcancado: 1 }
   }
   return { ganhoPremio: 0, tierAlcancado: 0 }
 }
@@ -198,12 +200,15 @@ function formatDateBR(dateStr?: string): string {
 }
 
 export function generateReportMessage(action: ActiveAction, calc: PlanCalculation): string {
+  const today = new Date().toLocaleDateString('pt-BR')
   const lines: string[] = [
     '📋 RELATÓRIO DE ACOMPANHAMENTO — PLANO DE META',
+    `📅 Data de Geração: ${today}`,
     '',
     `🏢 Cliente/Agência: ${action.client_name}`,
     `👤 Executivo: ${action.executive}`,
     `📍 Regional: ${action.regional}`,
+    `🏷️ Tipo de Meta: ${(Array.isArray(action.tipo_meta) ? action.tipo_meta : action.tipo_meta ? [action.tipo_meta] : ['Geral']).map((t) => (t === 'Por Cia' ? 'Meta por Cia' : 'Meta Geral')).join(' + ')}`,
     `📅 Período: ${formatDateBR(action.data_inicio)} a ${formatDateBR(action.data_fim)}`,
     '',
     `💰 Meta 1: ${formatCurrencyBR(action.valor_meta && action.valor_meta > 0 ? action.valor_meta : null)}`,
@@ -231,6 +236,12 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
     lines.push(`📈 % da Meta 2 Atingida: ${calc.pctAtingidoMeta2.toFixed(1)}%`)
   if (calc.pctAtingidoMeta3 !== null)
     lines.push(`📈 % da Meta 3 Atingida: ${calc.pctAtingidoMeta3.toFixed(1)}%`)
+
+  if (calc.ganhoPremio > 0) {
+    lines.push('')
+    lines.push(`🏆 Prêmio Calculado: ${formatCurrencyBR(calc.ganhoPremio)}`)
+    lines.push(`📊 Tier Alcançado: Meta ${calc.tierAlcancado}`)
+  }
 
   return lines.join('\n')
 }

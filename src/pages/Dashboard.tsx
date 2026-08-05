@@ -9,6 +9,7 @@ import { ReportDialog } from '@/components/ReportDialog'
 import { ClientDetailDialog } from '@/components/ClientDetailDialog'
 import { ClientPlansDetailDialog } from '@/components/ClientPlansDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
+import { ExecutivePlansKPI } from '@/components/ExecutivePlansKPI'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -192,11 +193,29 @@ export default function Dashboard() {
   const displayData =
     activeTab === 'Visão Geral' ? aggregateSheetRowsByClient(filteredData) : filteredData
 
-  const filteredActiveActions = roleFilteredActions.filter(
-    (a) => a.client_name !== 'Empresa Alfa Ltda',
+  const today = new Date().toISOString().slice(0, 10)
+  const kpiActiveActions = roleFilteredActions.filter((a) => a.client_name !== 'Empresa Alfa Ltda')
+  const filteredActiveActions = kpiActiveActions.filter((a) => {
+    if (selectedExecutive !== 'all' && a.executive !== selectedExecutive) return false
+    if (selectedRegional !== 'all' && a.regional !== selectedRegional) return false
+    return true
+  })
+  const uniqueExecutives = Array.from(
+    new Set([
+      ...roleFilteredSheetData.map((r) => r.executivo),
+      ...kpiActiveActions.map((a) => a.executive),
+    ]),
   )
-  const uniqueExecutives = Array.from(new Set(roleFilteredSheetData.map((r) => r.executivo))).sort()
-  const uniqueRegionals = Array.from(new Set(roleFilteredSheetData.map((r) => r.regional))).sort()
+    .filter(Boolean)
+    .sort()
+  const uniqueRegionals = Array.from(
+    new Set([
+      ...roleFilteredSheetData.map((r) => r.regional),
+      ...kpiActiveActions.map((a) => a.regional),
+    ]),
+  )
+    .filter(Boolean)
+    .sort()
 
   const handleOpenActionModal = (client: SheetRow) => {
     setSelectedClientForAction(client)
@@ -288,7 +307,10 @@ export default function Dashboard() {
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card border rounded-xl p-3 shadow-sm">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-            <Calendar className="h-4 w-4 text-emerald-500 shrink-0 ml-1 mr-1" />
+            <Calendar className="h-4 w-4 text-emerald-500 shrink-0 ml-1" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap mr-2 font-medium">
+              {new Date().toLocaleDateString('pt-BR')}
+            </span>
             {SHEET_MONTHS.map((month) => (
               <Button
                 key={month}
@@ -368,14 +390,17 @@ export default function Dashboard() {
         </div>
 
         {activeTab === 'Planos de Meta Ativos' ? (
-          <ActivePlansView
-            activeActions={filteredActiveActions}
-            planCalculations={planCalculations}
-            onEditAction={handleEditAction}
-            onGenerateReport={handleGenerateReport}
-            onDeleteAction={handleDeleteAction}
-            onClientClick={setPlanDetailClientName}
-          />
+          <>
+            <ExecutivePlansKPI activeActions={kpiActiveActions} today={today} />
+            <ActivePlansView
+              activeActions={filteredActiveActions}
+              planCalculations={planCalculations}
+              onEditAction={handleEditAction}
+              onGenerateReport={handleGenerateReport}
+              onDeleteAction={handleDeleteAction}
+              onClientClick={setPlanDetailClientName}
+            />
+          </>
         ) : (
           <>
             <KPICards

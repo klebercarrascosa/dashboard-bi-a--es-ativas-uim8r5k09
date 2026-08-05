@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-05T12:25:20.321Z",
+  "generatedAt": "2026-08-05T12:55:21.962Z",
   "collections": [
     {
       "name": "users",
@@ -223,11 +223,19 @@
           "type": "bool",
           "required": false,
           "system": false
+        },
+        {
+          "name": "tipo_meta",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Geral", "Por Cia"]
         }
       ],
       "indexes": [
         "CREATE INDEX `idx_active_actions_data_inicio` ON `active_actions` (data_inicio)",
-        "CREATE INDEX `idx_active_actions_data_fim` ON `active_actions` (data_fim)"
+        "CREATE INDEX `idx_active_actions_data_fim` ON `active_actions` (data_fim)",
+        "CREATE INDEX `idx_active_actions_executive` ON `active_actions` (executive)"
       ]
     }
   ]

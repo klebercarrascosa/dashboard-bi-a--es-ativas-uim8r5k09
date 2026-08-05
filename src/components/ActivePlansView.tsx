@@ -170,6 +170,7 @@ export function ActivePlansView({
                     <TableHead className="text-xs whitespace-nowrap">Cliente / Agência</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Período</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Pagamento</TableHead>
+                    <TableHead className="text-xs whitespace-nowrap">Tipo</TableHead>
                     <TableHead className="text-xs">Status</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 1</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
@@ -186,6 +187,7 @@ export function ActivePlansView({
                     <TableHead className="text-xs text-right whitespace-nowrap">
                       Falta (M3)
                     </TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">Ganho</TableHead>
                     <TableHead className="text-xs text-center whitespace-nowrap">
                       Plano / Relatório
                     </TableHead>
@@ -239,6 +241,24 @@ export function ActivePlansView({
                             !action.bonus_anual && <span className="text-muted-foreground">—</span>}
                         </div>
                       </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {(Array.isArray(action.tipo_meta)
+                            ? action.tipo_meta
+                            : action.tipo_meta
+                              ? [action.tipo_meta]
+                              : ['Geral']
+                          ).map((t) => (
+                            <Badge
+                              key={t}
+                              variant="outline"
+                              className={`text-[10px] ${t === 'Por Cia' ? 'bg-purple-500/10 text-purple-600 border-purple-500/30' : 'bg-blue-500/10 text-blue-600 border-blue-500/30'}`}
+                            >
+                              {t === 'Por Cia' ? 'Por Cia' : 'Geral'}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -267,6 +287,15 @@ export function ActivePlansView({
                       </TableCell>
                       <TableCell className="text-xs text-right">
                         {renderFalta(calc?.quantoFaltaMeta3)}
+                      </TableCell>
+                      <TableCell className="text-xs text-right font-mono">
+                        {calc?.ganhoPremio != null && calc.ganhoPremio > 0 ? (
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(calc.ganhoPremio)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-center">
                         <div className="flex items-center justify-center gap-1">
