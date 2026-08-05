@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [planDetailClientName, setPlanDetailClientName] = useState<string | null>(null)
   const [forceNewPlan, setForceNewPlan] = useState(false)
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+  const [planosExecInitialExec, setPlanosExecInitialExec] = useState<string | null>(null)
 
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
@@ -420,7 +421,14 @@ export default function Dashboard() {
 
         {activeTab === 'Planos de Meta Ativos' ? (
           <>
-            <ExecutivePlansKPI activeActions={filteredActiveActions} today={today} />
+            <ExecutivePlansKPI
+              activeActions={filteredActiveActions}
+              today={today}
+              onExecutiveClick={(exec) => {
+                setPlanosExecInitialExec(exec)
+                setActiveTab('Planos por Executivo')
+              }}
+            />
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="shadow-sm border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
                 <CardContent className="p-5">
@@ -453,12 +461,14 @@ export default function Dashboard() {
           </>
         ) : activeTab === 'Planos por Executivo' ? (
           <ExecutivePlansView
+            key={planosExecInitialExec ?? 'none'}
             activeActions={filteredActiveActions}
             planCalculations={planCalculations}
             today={today}
             onClientClick={setPlanDetailClientName}
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
+            initialExec={planosExecInitialExec}
           />
         ) : (
           <>

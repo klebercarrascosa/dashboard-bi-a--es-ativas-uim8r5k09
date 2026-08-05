@@ -1,38 +1,34 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Users, Flag, Building2, CalendarDays } from 'lucide-react'
+import { Flag, Users, CalendarDays, Trophy } from 'lucide-react'
 import type { ActiveAction } from '@/services/actions'
 
 interface ExecutivePlansKPIProps {
   activeActions: ActiveAction[]
   today?: string
+  onExecutiveClick?: (executive: string) => void
 }
 
-export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIProps) {
-  const [selectedExec, setSelectedExec] = useState<string | null>(null)
+export function ExecutivePlansKPI({
+  activeActions,
+  today,
+  onExecutiveClick,
+}: ExecutivePlansKPIProps) {
   const todayStr = today || new Date().toISOString().slice(0, 10)
 
   const executiveStats = useMemo(() => {
-    const map = new Map<string, { clients: Set<string>; plans: ActiveAction[] }>()
+    const map = new Map<string, ActiveAction[]>()
     for (const action of activeActions) {
       if (action.status === 'Concluído') continue
       if (!action.data_inicio || !action.data_fim) continue
       if (todayStr < action.data_inicio || todayStr > action.data_fim) continue
       const exec = action.executive || 'Sem Executivo'
-      if (!map.has(exec)) map.set(exec, { clients: new Set(), plans: [] })
-      map.get(exec)!.clients.add(action.client_name)
-      map.get(exec)!.plans.push(action)
+      if (!map.has(exec)) map.set(exec, [])
+      map.get(exec)!.push(action)
     }
     return Array.from(map.entries())
-      .map(([exec, { clients, plans }]) => ({
-        exec,
-        clientCount: clients.size,
-        uniqueClients: Array.from(clients).sort(),
-        plans,
-      }))
-      .sort((a, b) => b.clientCount - a.clientCount)
+      .map(([exec, plans]) => ({ exec, planCount: plans.length }))
+      .sort((a, b) => b.planCount - a.planCount)
   }, [activeActions, todayStr])
 
   const formattedToday = useMemo(() => {
@@ -43,12 +39,7 @@ export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIPro
     }
   }, [todayStr])
 
-  const totalActivePlans = executiveStats.reduce((s, e) => s + e.plans.length, 0)
-  const totalClients = executiveStats.reduce((s, e) => s + e.clientCount, 0)
-
-  const selectedData = selectedExec
-    ? (executiveStats.find((s) => s.exec === selectedExec) ?? null)
-    : null
+  const totalActivePlans = executiveStats.reduce((s, e) => s + e.planCount, 0)
 
   return (
     <>
@@ -68,7 +59,7 @@ export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIPro
             <span className="text-muted-foreground">·</span>
             <span className="font-semibold flex items-center gap-1">
               <Users className="h-3 w-3 text-purple-500" />
-              {totalClients} {totalClients === 1 ? 'cliente' : 'clientes'}
+              {executiveStats.length} {executiveStats.length === 1 ? 'executivo' : 'executivos'}
             </span>
           </div>
         )}
@@ -85,60 +76,31 @@ export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIPro
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-          {executiveStats.map(({ exec, clientCount }) => (
+          {executiveStats.map(({ exec, planCount }, idx) => (
             <Card
               key={exec}
               className="cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent"
-              onClick={() => setSelectedExec(exec)}
+              onClick={() => onExecutiveClick?.(exec)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
                     {exec}
                   </p>
-                  <Flag className="h-3 w-3 text-amber-500 shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    {idx === 0 && planCount > 0 && <Trophy className="h-3 w-3 text-amber-500" />}
+                    <Flag className="h-3 w-3 text-amber-500" />
+                  </div>
                 </div>
-                <p className="text-2xl font-extrabold">{clientCount}</p>
+                <p className="text-2xl font-extrabold">{planCount}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {clientCount === 1 ? 'cliente ativo' : 'clientes ativos'}
+                  {planCount === 1 ? 'plano ativo' : 'planos ativos'}
                 </p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-
-      <Dialog open={!!selectedExec} onOpenChange={(open) => !open && setSelectedExec(null)}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Users className="h-5 w-5 text-amber-500" />
-              {selectedExec}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-              {selectedData?.clientCount ?? 0}{' '}
-              {selectedData?.clientCount === 1 ? 'agência ativa' : 'agências ativas'}
-            </Badge>
-            {selectedData?.uniqueClients.map((clientName) => {
-              const plan = selectedData.plans.find((p) => p.client_name === clientName)
-              return (
-                <div
-                  key={clientName}
-                  className="flex items-center justify-between rounded-lg border p-2.5 text-xs"
-                >
-                  <span className="font-semibold">{clientName}</span>
-                  <span className="text-muted-foreground flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    {plan?.regional || '—'}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

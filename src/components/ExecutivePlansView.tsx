@@ -13,7 +13,7 @@ import {
 import { formatCurrency } from '@/services/sheets'
 import type { ActiveAction } from '@/services/actions'
 import type { PlanCalculation } from '@/services/plan-calculations'
-import { Flag, TrendingUp, Eye, FileText } from 'lucide-react'
+import { Flag, TrendingUp, Eye, FileText, Trophy } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   Planejada: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
@@ -39,6 +39,12 @@ function formatDateBR(dateStr?: string): string {
   }
 }
 
+function isActivePlan(action: ActiveAction, today: string): boolean {
+  if (action.status === 'Concluído') return false
+  if (!action.data_inicio || !action.data_fim) return false
+  return today >= action.data_inicio && today <= action.data_fim
+}
+
 interface ExecutivePlansViewProps {
   activeActions: ActiveAction[]
   planCalculations: Map<string, PlanCalculation>
@@ -46,6 +52,7 @@ interface ExecutivePlansViewProps {
   onClientClick: (clientName: string) => void
   onEditAction: (action: ActiveAction) => void
   onGenerateReport: (action: ActiveAction) => void
+  initialExec?: string | null
 }
 
 export function ExecutivePlansView({
@@ -55,65 +62,40 @@ export function ExecutivePlansView({
   onClientClick,
   onEditAction,
   onGenerateReport,
+  initialExec,
 }: ExecutivePlansViewProps) {
-  const [selectedExec, setSelectedExec] = useState<string | null>(null)
+  const [selectedExec, setSelectedExec] = useState<string | null>(initialExec ?? null)
 
   const executiveStats = useMemo(() => {
-    const map = new Map<string, { clients: Set<string>; totalMeta: number; totalSoma: number }>()
+    const map = new Map<string, { count: number; totalMeta: number; totalSoma: number }>()
     for (const action of activeActions) {
       const exec = action.executive || 'Sem Executivo'
-      if (!map.has(exec)) map.set(exec, { clients: new Set(), totalMeta: 0, totalSoma: 0 })
+      if (!map.has(exec)) map.set(exec, { count: 0, totalMeta: 0, totalSoma: 0 })
       const s = map.get(exec)!
       s.totalMeta += action.valor_meta && action.valor_meta > 0 ? action.valor_meta : 0
       s.totalSoma += planCalculations.get(action.id ?? '')?.somaVendida ?? 0
-      if (
-        action.status !== 'Concluído' &&
-        action.data_inicio &&
-        action.data_fim &&
-        today >= action.data_inicio &&
-        today <= action.data_fim
-      ) {
-        s.clients.add(action.client_name)
-      }
+      if (isActivePlan(action, today)) s.count++
     }
     return Array.from(map.entries())
       .map(([exec, s]) => ({
         exec,
-        activeClientCount: s.clients.size,
-        totalMeta: s.totalMeta,
-        totalSoma: s.totalSoma,
+        activePlanCount: s.count,
         growthPct: s.totalMeta > 0 ? (s.totalSoma / s.totalMeta) * 100 : 0,
       }))
-      .sort((a, b) => b.activeClientCount - a.activeClientCount)
+      .sort((a, b) => b.activePlanCount - a.activePlanCount)
   }, [activeActions, planCalculations, today])
 
-  const visiblePlans = selectedExec
-    ? activeActions.filter((a) => (a.executive || 'Sem Executivo') === selectedExec)
-    : activeActions
-
-  const sortedPlans = [...visiblePlans].sort((a, b) => {
-    const aDone = a.status === 'Concluído' ? 1 : 0
-    const bDone = b.status === 'Concluído' ? 1 : 0
-    if (aDone !== bDone) return aDone - bDone
-    return a.client_name.localeCompare(b.client_name)
-  })
+  const visibleActivePlans = useMemo(() => {
+    if (!selectedExec) return []
+    return activeActions
+      .filter((a) => (a.executive || 'Sem Executivo') === selectedExec && isActivePlan(a, today))
+      .sort((a, b) => a.client_name.localeCompare(b.client_name))
+  }, [activeActions, selectedExec, today])
 
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-        <Card
-          className={`cursor-pointer hover:shadow-md transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent ${selectedExec === null ? 'ring-2 ring-amber-500' : ''}`}
-          onClick={() => setSelectedExec(null)}
-        >
-          <CardContent className="p-4">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
-              Todos
-            </p>
-            <p className="text-2xl font-extrabold">{activeActions.length}</p>
-            <p className="text-[10px] text-muted-foreground">planos totais</p>
-          </CardContent>
-        </Card>
-        {executiveStats.map(({ exec, activeClientCount, growthPct }) => (
+        {executiveStats.map(({ exec, activePlanCount, growthPct }, idx) => (
           <Card
             key={exec}
             className={`cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent ${selectedExec === exec ? 'ring-2 ring-amber-500' : ''}`}
@@ -124,11 +106,16 @@ export function ExecutivePlansView({
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
                   {exec}
                 </p>
-                <Flag className="h-3 w-3 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-1 shrink-0">
+                  {idx === 0 && activePlanCount > 0 && (
+                    <Trophy className="h-3 w-3 text-amber-500" />
+                  )}
+                  <Flag className="h-3 w-3 text-amber-500" />
+                </div>
               </div>
-              <p className="text-2xl font-extrabold">{activeClientCount}</p>
+              <p className="text-2xl font-extrabold">{activePlanCount}</p>
               <p className="text-[10px] text-muted-foreground">
-                {activeClientCount === 1 ? 'cliente ativo' : 'clientes ativos'}
+                {activePlanCount === 1 ? 'plano ativo' : 'planos ativos'}
               </p>
               <div className="mt-1.5 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3 text-emerald-500" />
@@ -144,7 +131,13 @@ export function ExecutivePlansView({
       {selectedExec && (
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-muted-foreground">
-            Planos de <span className="text-foreground">{selectedExec}</span>
+            Planos ativos de <span className="text-foreground">{selectedExec}</span>{' '}
+            <Badge
+              variant="outline"
+              className="ml-1 bg-amber-500/10 text-amber-600 border-amber-500/30"
+            >
+              {visibleActivePlans.length}
+            </Badge>
           </p>
           <Button
             variant="ghost"
@@ -159,9 +152,14 @@ export function ExecutivePlansView({
 
       <Card className="shadow-sm">
         <CardContent className="pt-0">
-          {sortedPlans.length === 0 ? (
+          {!selectedExec ? (
+            <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+              <Flag className="h-8 w-8 text-muted-foreground/50" />
+              <p>Selecione um executivo acima para ver seus planos ativos.</p>
+            </div>
+          ) : visibleActivePlans.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-              Nenhum plano encontrado.
+              Nenhum plano ativo encontrado para {selectedExec}.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -173,14 +171,23 @@ export function ExecutivePlansView({
                     <TableHead className="text-xs whitespace-nowrap">Status</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Período</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 1</TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">Meta 3</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">
                       Soma Vendida
                     </TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">
+                      Quanto Falta
+                    </TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">
+                      % Atingido
+                    </TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">Ganho</TableHead>
                     <TableHead className="text-xs text-center whitespace-nowrap">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedPlans.map((action) => {
+                  {visibleActivePlans.map((action) => {
                     const calc = planCalculations.get(action.id ?? '')
                     return (
                       <TableRow key={action.id}>
@@ -217,7 +224,28 @@ export function ExecutivePlansView({
                           {formatCurrency(action.valor_meta ?? null)}
                         </TableCell>
                         <TableCell className="text-xs text-right font-mono">
+                          {formatCurrency(action.meta_2 ?? null)}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono">
+                          {formatCurrency(action.meta_3 ?? null)}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono">
                           {formatCurrency(calc?.somaVendida ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono">
+                          {calc?.quantoFalta != null
+                            ? calc.quantoFalta <= 0
+                              ? '✅ Atingida'
+                              : formatCurrency(calc.quantoFalta)
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono">
+                          {calc?.pctAtingido != null ? `${calc.pctAtingido.toFixed(1)}%` : '—'}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {calc?.ganhoPremio != null && calc.ganhoPremio > 0
+                            ? formatCurrency(calc.ganhoPremio)
+                            : '—'}
                         </TableCell>
                         <TableCell className="text-xs text-center">
                           <div className="flex items-center gap-1 justify-center">
