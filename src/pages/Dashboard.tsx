@@ -13,6 +13,7 @@ import { ExecutivePlansView } from '@/components/ExecutivePlansView'
 import { MyTeamDashboard } from '@/components/MyTeamDashboard'
 import { ActivePlansRanking } from '@/components/ActivePlansRanking'
 import { ActivePlansKpi } from '@/components/ActivePlansKpi'
+import { ActiveAgenciesKpi } from '@/components/ActiveAgenciesKpi'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -472,7 +473,13 @@ export default function Dashboard() {
           <>
             <KPICards data={displayData} activeTab={activeTab} />
 
-            <ActivePlansKpi activeActions={activeOnlyActions} today={today} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ActivePlansKpi activeActions={activeOnlyActions} today={today} />
+                <ActiveAgenciesKpi activeActions={activeOnlyActions} today={today} />
+              </div>
+              <ActiveAgenciesKpi activeActions={activeOnlyActions} today={today} />
+            </div>
 
             <ChartsSection data={displayData} />
 

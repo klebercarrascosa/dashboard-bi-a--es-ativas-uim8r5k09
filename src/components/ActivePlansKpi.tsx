@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import type { ActiveAction } from '@/services/actions'
-import { Flag, Filter, Trophy } from 'lucide-react'
+import { Flag, Filter, Trophy, ChevronDown, ChevronRight, Building2 } from 'lucide-react'
 
 interface ActivePlansKpiProps {
   activeActions: ActiveAction[]
@@ -19,11 +19,24 @@ interface ActivePlansKpiProps {
 
 export function ActivePlansKpi({ activeActions, today }: ActivePlansKpiProps) {
   const [selectedExec, setSelectedExec] = useState<string>('all')
+  const [expandedExec, setExpandedExec] = useState<string | null>(null)
 
   const executives = useMemo(
     () => Array.from(new Set(activeActions.map((a) => a.executive).filter(Boolean))).sort(),
     [activeActions],
   )
+
+  const agenciesByExec = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const action of activeActions) {
+      if (!action.data_inicio || !action.data_fim) continue
+      if (today < action.data_inicio || today > action.data_fim) continue
+      const exec = action.executive || 'Sem Executivo'
+      if (!map.has(exec)) map.set(exec, [])
+      map.get(exec)!.push(action.client_name)
+    }
+    return map
+  }, [activeActions, today])
 
   const executiveCounts = useMemo(() => {
     const map = new Map<string, number>()
@@ -55,7 +68,7 @@ export function ActivePlansKpi({ activeActions, today }: ActivePlansKpiProps) {
           <div>
             <CardTitle className="text-sm font-bold flex items-center gap-1.5">
               <Flag className="h-4 w-4 text-emerald-500" />
-              Planos de Meta Ativos
+              Planos de Meta Ativos por executivo
             </CardTitle>
             <CardDescription className="text-xs">
               {selectedExec === 'all'
@@ -107,38 +120,66 @@ export function ActivePlansKpi({ activeActions, today }: ActivePlansKpiProps) {
         </div>
 
         {filteredCounts.length > 0 ? (
-          <div className="max-h-[260px] overflow-y-auto space-y-1 pr-1">
+          <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
             {filteredCounts.map((item, idx) => {
               const barPct = maxCount > 0 ? (item.count / maxCount) * 100 : 0
               const sharePct = totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : '0'
+              const isExpanded = expandedExec === item.name
+              const agencies = agenciesByExec.get(item.name) ?? []
               return (
-                <div
-                  key={`${item.name}-${idx}`}
-                  className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors text-xs"
-                >
-                  <span className="font-mono font-bold text-muted-foreground w-6 shrink-0">
-                    {idx + 1}º
-                  </span>
-                  <span className="font-medium truncate flex-1" title={item.name}>
-                    {item.name}
-                  </span>
-                  <div className="flex-1 max-w-[180px]">
-                    <div className="h-5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-emerald-500/60 to-emerald-500 rounded-full transition-all duration-500"
-                        style={{ width: `${barPct}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 w-6 text-right">
-                    {item.count}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 shrink-0"
+                <div key={`${item.name}-${idx}`}>
+                  <div
+                    className="flex items-center gap-3 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors text-xs cursor-pointer"
+                    onClick={() => setExpandedExec(isExpanded ? null : item.name)}
                   >
-                    {sharePct}%
-                  </Badge>
+                    <span className="font-mono font-bold text-muted-foreground w-6 shrink-0">
+                      {idx + 1}º
+                    </span>
+                    {isExpanded ? (
+                      <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="font-medium truncate flex-1" title={item.name}>
+                      {item.name}
+                    </span>
+                    <div className="flex-1 max-w-[180px]">
+                      <div className="h-5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500/60 to-emerald-500 rounded-full transition-all duration-500"
+                          style={{ width: `${barPct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 w-6 text-right">
+                      {item.count}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 shrink-0"
+                    >
+                      {sharePct}%
+                    </Badge>
+                  </div>
+                  {isExpanded && (
+                    <div className="ml-10 mb-2 space-y-1 animate-fade-in">
+                      {agencies.length > 0 ? (
+                        agencies.map((agency, i) => (
+                          <div
+                            key={`${agency}-${i}`}
+                            className="flex items-center gap-2 py-1 px-2 rounded text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
+                          >
+                            <Building2 className="h-3 w-3 text-emerald-500/60 shrink-0" />
+                            <span className="truncate">{agency}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic px-2 py-1">
+                          Nenhuma agência ativa.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
