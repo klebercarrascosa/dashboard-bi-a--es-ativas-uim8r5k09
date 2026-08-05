@@ -110,6 +110,8 @@ export interface PlanCalculation {
   pctAtingidoMeta3: number | null
   isDue: boolean
   nextDueDate: Date | null
+  ganhoPremio: number
+  tierAlcancado: 0 | 1 | 2 | 3
 }
 
 export function calculatePlanMetrics(action: ActiveAction, somaVendida: number): PlanCalculation {
@@ -148,7 +150,32 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     pctAtingidoMeta3,
     isDue,
     nextDueDate,
+    ...calculateTierGain(action),
   }
+}
+
+export function calculateTierGain(action: ActiveAction): {
+  ganhoPremio: number
+  tierAlcancado: 0 | 1 | 2 | 3
+} {
+  const valorVendido = action.valor_vendido ?? 0
+  const meta1 = action.valor_meta ?? 0
+  const meta2 = action.meta_2 ?? 0
+  const meta3 = action.meta_3 ?? 0
+  const premio1 = action.premio_meta_1 ?? 0
+  const premio2 = action.premio_meta_2 ?? 0
+  const premio3 = action.premio_meta_3 ?? 0
+
+  if (meta3 > 0 && valorVendido >= meta3) {
+    return { ganhoPremio: valorVendido * (premio3 / 100), tierAlcancado: 3 }
+  }
+  if (meta2 > 0 && valorVendido >= meta2) {
+    return { ganhoPremio: valorVendido * (premio2 / 100), tierAlcancado: 2 }
+  }
+  if (meta1 > 0 && valorVendido >= meta1) {
+    return { ganhoPremio: valorVendido * (premio1 / 100), tierAlcancado: 1 }
+  }
+  return { ganhoPremio: 0, tierAlcancado: 0 }
 }
 
 function formatCurrencyBR(value: number | null | undefined): string {

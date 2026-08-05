@@ -16,6 +16,10 @@ export interface ActiveAction {
   valor_meta?: number
   meta_2?: number
   meta_3?: number
+  premio_meta_1?: number
+  premio_meta_2?: number
+  premio_meta_3?: number
+  valor_vendido?: number
   intervalo_relatorio?: '15 dias' | '30 dias'
   ultimo_relatorio?: string
   created?: string

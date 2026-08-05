@@ -69,6 +69,7 @@ export function PlanosMetaAtivos({ activeActions, planCalculations }: PlanosMeta
                   Quanto Falta (M2)
                 </TableHead>
                 <TableHead className="text-xs text-right whitespace-nowrap">% Atingido</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">Ganho</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -120,6 +121,9 @@ export function PlanosMetaAtivos({ activeActions, planCalculations }: PlanosMeta
                       {calc?.pctAtingido !== null && calc?.pctAtingido !== undefined
                         ? `${calc.pctAtingido.toFixed(1)}%`
                         : '—'}
+                    </TableCell>
+                    <TableCell className="text-xs text-right font-mono whitespace-nowrap font-bold text-emerald-600 dark:text-emerald-400">
+                      {calc?.ganhoPremio != null ? formatCurrency(calc.ganhoPremio) : '—'}
                     </TableCell>
                   </TableRow>
                 )

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T21:48:34.564Z",
+  "generatedAt": "2026-08-05T11:24:34.983Z",
   "collections": [
     {
       "name": "users",
@@ -178,6 +178,30 @@
         },
         {
           "name": "meta_3",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "premio_meta_1",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "premio_meta_2",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "premio_meta_3",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_vendido",
           "type": "number",
           "required": false,
           "system": false

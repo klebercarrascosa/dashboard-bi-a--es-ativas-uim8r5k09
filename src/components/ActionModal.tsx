@@ -29,9 +29,41 @@ const planSchema = z
   .object({
     dataInicio: z.string().optional(),
     dataFim: z.string().optional(),
-    valorMeta: z.string().min(1, 'Meta 1 é obrigatória'),
-    meta2: z.string().min(1, 'Meta 2 é obrigatória'),
-    meta3: z.string().min(1, 'Meta 3 é obrigatória'),
+    valorMeta: z.string().optional(),
+    meta2: z.string().optional(),
+    meta3: z.string().optional(),
+    premioMeta1: z
+      .string()
+      .optional()
+      .refine((v) => {
+        if (!v || v.trim() === '') return true
+        const n = parseFloat(v)
+        return !isNaN(n) && n >= 0 && n <= 100
+      }, 'Percentual deve estar entre 0 e 100'),
+    premioMeta2: z
+      .string()
+      .optional()
+      .refine((v) => {
+        if (!v || v.trim() === '') return true
+        const n = parseFloat(v)
+        return !isNaN(n) && n >= 0 && n <= 100
+      }, 'Percentual deve estar entre 0 e 100'),
+    premioMeta3: z
+      .string()
+      .optional()
+      .refine((v) => {
+        if (!v || v.trim() === '') return true
+        const n = parseFloat(v)
+        return !isNaN(n) && n >= 0 && n <= 100
+      }, 'Percentual deve estar entre 0 e 100'),
+    valorVendido: z
+      .string()
+      .optional()
+      .refine((v) => {
+        if (!v || v.trim() === '') return true
+        const n = parseFloat(v)
+        return !isNaN(n) && n >= 0
+      }, 'Valor vendido não pode ser negativo'),
   })
   .refine(
     (data) => {
@@ -72,6 +104,10 @@ export function ActionModal({
   const [meta2, setMeta2] = useState('')
   const [meta3, setMeta3] = useState('')
   const [intervaloRelatorio, setIntervaloRelatorio] = useState<'15 dias' | '30 dias'>('30 dias')
+  const [premioMeta1, setPremioMeta1] = useState('')
+  const [premioMeta2, setPremioMeta2] = useState('')
+  const [premioMeta3, setPremioMeta3] = useState('')
+  const [valorVendido, setValorVendido] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -93,6 +129,18 @@ export function ActionModal({
       setValorMeta(existingAction.valor_meta ? String(existingAction.valor_meta) : '')
       setMeta2(existingAction.meta_2 ? String(existingAction.meta_2) : '')
       setMeta3(existingAction.meta_3 ? String(existingAction.meta_3) : '')
+      setPremioMeta1(
+        existingAction.premio_meta_1 != null ? String(existingAction.premio_meta_1) : '',
+      )
+      setPremioMeta2(
+        existingAction.premio_meta_2 != null ? String(existingAction.premio_meta_2) : '',
+      )
+      setPremioMeta3(
+        existingAction.premio_meta_3 != null ? String(existingAction.premio_meta_3) : '',
+      )
+      setValorVendido(
+        existingAction.valor_vendido != null ? String(existingAction.valor_vendido) : '',
+      )
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -103,6 +151,10 @@ export function ActionModal({
       setValorMeta('')
       setMeta2('')
       setMeta3('')
+      setPremioMeta1('')
+      setPremioMeta2('')
+      setPremioMeta3('')
+      setValorVendido('')
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction, client])
@@ -113,7 +165,17 @@ export function ActionModal({
     e.preventDefault()
     if (!user) return
 
-    const result = planSchema.safeParse({ dataInicio, dataFim, valorMeta, meta2, meta3 })
+    const result = planSchema.safeParse({
+      dataInicio,
+      dataFim,
+      valorMeta,
+      meta2,
+      meta3,
+      premioMeta1,
+      premioMeta2,
+      premioMeta3,
+      valorVendido,
+    })
     if (!result.success) {
       const errors: FieldErrors = {}
       for (const issue of result.error.issues) {
@@ -137,6 +199,10 @@ export function ActionModal({
         valor_meta: valorMeta ? parseFloat(valorMeta) : 0,
         meta_2: meta2 ? parseFloat(meta2) : 0,
         meta_3: meta3 ? parseFloat(meta3) : 0,
+        premio_meta_1: premioMeta1 ? parseFloat(premioMeta1) : 0,
+        premio_meta_2: premioMeta2 ? parseFloat(premioMeta2) : 0,
+        premio_meta_3: premioMeta3 ? parseFloat(premioMeta3) : 0,
+        valor_vendido: valorVendido ? parseFloat(valorVendido) : 0,
         intervalo_relatorio: intervaloRelatorio,
       }
       if (existingAction && existingAction.id) {
@@ -266,6 +332,94 @@ export function ActionModal({
                 className="h-9 text-xs"
               />
               {fieldErrors.meta3 && <p className="text-[11px] text-red-500">{fieldErrors.meta3}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Prêmio Meta 1 (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="Ex: 2.50"
+                value={premioMeta1}
+                onChange={(e) => setPremioMeta1(e.target.value)}
+                className="h-9 text-xs"
+              />
+              {fieldErrors.premioMeta1 && (
+                <p className="text-[11px] text-red-500">{fieldErrors.premioMeta1}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Prêmio Meta 2 (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="Ex: 5.00"
+                value={premioMeta2}
+                onChange={(e) => setPremioMeta2(e.target.value)}
+                className="h-9 text-xs"
+              />
+              {fieldErrors.premioMeta2 && (
+                <p className="text-[11px] text-red-500">{fieldErrors.premioMeta2}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Prêmio Meta 3 (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="Ex: 10.00"
+                value={premioMeta3}
+                onChange={(e) => setPremioMeta3(e.target.value)}
+                className="h-9 text-xs"
+              />
+              {fieldErrors.premioMeta3 && (
+                <p className="text-[11px] text-red-500">{fieldErrors.premioMeta3}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Valor Vendido (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 60000.00"
+                value={valorVendido}
+                onChange={(e) => setValorVendido(e.target.value)}
+                className="h-9 text-xs"
+              />
+              {fieldErrors.valorVendido && (
+                <p className="text-[11px] text-red-500">{fieldErrors.valorVendido}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Ganho Calculado</Label>
+              <div className="h-9 flex items-center px-3 rounded-md border bg-emerald-500/5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                {(() => {
+                  const vv = parseFloat(valorVendido) || 0
+                  const m1 = parseFloat(valorMeta) || 0
+                  const m2 = parseFloat(meta2) || 0
+                  const m3 = parseFloat(meta3) || 0
+                  const p1 = parseFloat(premioMeta1) || 0
+                  const p2 = parseFloat(premioMeta2) || 0
+                  const p3 = parseFloat(premioMeta3) || 0
+                  let ganho = 0
+                  if (m3 > 0 && vv >= m3) ganho = vv * (p3 / 100)
+                  else if (m2 > 0 && vv >= m2) ganho = vv * (p2 / 100)
+                  else if (m1 > 0 && vv >= m1) ganho = vv * (p1 / 100)
+                  return formatCurrency(ganho)
+                })()}
+              </div>
             </div>
           </div>
 
