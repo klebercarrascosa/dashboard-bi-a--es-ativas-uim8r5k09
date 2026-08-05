@@ -23,6 +23,7 @@ import { ActiveAction, createActiveAction, updateActiveAction } from '@/services
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { CheckCircle2, Clock } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { z } from 'zod'
 
 const planSchema = z
@@ -108,6 +109,9 @@ export function ActionModal({
   const [premioMeta2, setPremioMeta2] = useState('')
   const [premioMeta3, setPremioMeta3] = useState('')
   const [valorVendido, setValorVendido] = useState('')
+  const [pagamentoMensal, setPagamentoMensal] = useState(false)
+  const [pagamentoTrimestral, setPagamentoTrimestral] = useState(false)
+  const [bonusAnual, setBonusAnual] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -141,6 +145,9 @@ export function ActionModal({
       setValorVendido(
         existingAction.valor_vendido != null ? String(existingAction.valor_vendido) : '',
       )
+      setPagamentoMensal(existingAction.pagamento_mensal ?? false)
+      setPagamentoTrimestral(existingAction.pagamento_trimestral ?? false)
+      setBonusAnual(existingAction.bonus_anual ?? false)
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -155,6 +162,9 @@ export function ActionModal({
       setPremioMeta2('')
       setPremioMeta3('')
       setValorVendido('')
+      setPagamentoMensal(false)
+      setPagamentoTrimestral(false)
+      setBonusAnual(false)
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction, client])
@@ -204,6 +214,9 @@ export function ActionModal({
         premio_meta_3: premioMeta3 ? parseFloat(premioMeta3) : 0,
         valor_vendido: valorVendido ? parseFloat(valorVendido) : 0,
         intervalo_relatorio: intervaloRelatorio,
+        pagamento_mensal: pagamentoMensal,
+        pagamento_trimestral: pagamentoTrimestral,
+        bonus_anual: bonusAnual,
       }
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)
@@ -475,6 +488,39 @@ export function ActionModal({
                   Último relatório enviado: {formatDateDisplay(existingAction.ultimo_relatorio)}
                 </p>
               )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Frequência de Pagamento</Label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <Checkbox
+                  checked={pagamentoMensal}
+                  onCheckedChange={(checked) => {
+                    setPagamentoMensal(checked === true)
+                    if (checked === true) setPagamentoTrimestral(false)
+                  }}
+                />
+                <span>Mensal</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <Checkbox
+                  checked={pagamentoTrimestral}
+                  onCheckedChange={(checked) => {
+                    setPagamentoTrimestral(checked === true)
+                    if (checked === true) setPagamentoMensal(false)
+                  }}
+                />
+                <span>Trimestral</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <Checkbox
+                  checked={bonusAnual}
+                  onCheckedChange={(checked) => setBonusAnual(checked === true)}
+                />
+                <span className="font-semibold">Bônus Anual</span>
+              </label>
+            </div>
           </div>
 
           <div className="space-y-1.5">

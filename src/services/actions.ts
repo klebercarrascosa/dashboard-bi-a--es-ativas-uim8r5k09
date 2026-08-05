@@ -22,6 +22,9 @@ export interface ActiveAction {
   valor_vendido?: number
   intervalo_relatorio?: '15 dias' | '30 dias'
   ultimo_relatorio?: string
+  pagamento_mensal?: boolean
+  pagamento_trimestral?: boolean
+  bonus_anual?: boolean
   created?: string
   updated?: string
 }

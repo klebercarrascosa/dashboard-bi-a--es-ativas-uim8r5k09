@@ -60,6 +60,7 @@ export function PlanosMetaAtivos({ activeActions, planCalculations }: PlanosMeta
                 <TableHead className="text-xs whitespace-nowrap">Cliente/Agência</TableHead>
                 <TableHead className="text-xs whitespace-nowrap">Executivo</TableHead>
                 <TableHead className="text-xs whitespace-nowrap">Regional</TableHead>
+                <TableHead className="text-xs whitespace-nowrap">Pagamento</TableHead>
                 <TableHead className="text-xs whitespace-nowrap">Status</TableHead>
                 <TableHead className="text-xs text-right whitespace-nowrap">Meta</TableHead>
                 <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
@@ -85,6 +86,37 @@ export function PlanosMetaAtivos({ activeActions, planCalculations }: PlanosMeta
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {action.regional || '—'}
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        {action.pagamento_mensal && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30 w-fit"
+                          >
+                            Mensal
+                          </Badge>
+                        )}
+                        {action.pagamento_trimestral && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 w-fit"
+                          >
+                            Trimestral
+                          </Badge>
+                        )}
+                        {action.bonus_anual && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 w-fit"
+                          >
+                            Bônus Anual
+                          </Badge>
+                        )}
+                        {!action.pagamento_mensal &&
+                          !action.pagamento_trimestral &&
+                          !action.bonus_anual && <span className="text-muted-foreground">—</span>}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { SheetRow, formatCurrency } from '@/services/sheets'
 import { ActiveAction, findActivePlanForClient } from '@/services/actions'
 import { PlanCalculation, getMonthlyBreakdown } from '@/services/plan-calculations'
@@ -190,6 +191,25 @@ export function ClientDetailDialog({
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Plano de Meta
               </p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Pagamento: </span>
+                  <span className="font-semibold text-xs">
+                    {action.pagamento_mensal
+                      ? 'Mensal'
+                      : action.pagamento_trimestral
+                        ? 'Trimestral'
+                        : '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Bônus Anual: </span>
+                  <span className="font-semibold text-xs">
+                    {action.bonus_anual ? 'Sim' : 'Não'}
+                  </span>
+                </div>
+              </div>
+              <Separator className="my-2" />
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Meta 1: </span>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-05T11:24:34.983Z",
+  "generatedAt": "2026-08-05T12:25:20.321Z",
   "collections": [
     {
       "name": "users",
@@ -203,6 +203,24 @@
         {
           "name": "valor_vendido",
           "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "pagamento_mensal",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "pagamento_trimestral",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "bonus_anual",
+          "type": "bool",
           "required": false,
           "system": false
         }
