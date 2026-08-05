@@ -1,27 +1,13 @@
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { SheetRow } from '@/services/sheets'
-import { ActiveAction } from '@/services/actions'
-import { PlanCalculation } from '@/services/plan-calculations'
-import { PieChart, Flag } from 'lucide-react'
+import { PieChart } from 'lucide-react'
 
 interface ChartsSectionProps {
   data: SheetRow[]
-  activeActions: ActiveAction[]
-  planCalculations: Map<string, PlanCalculation>
 }
 
-export function ChartsSection({ data, activeActions, planCalculations }: ChartsSectionProps) {
-  const activePlanList = useMemo(() => {
-    return activeActions
-      .filter((a) => a.status !== 'Concluído')
-      .map((a) => ({
-        name: a.client_name,
-        pctAtingido: planCalculations.get(a.id ?? '')?.pctAtingido ?? null,
-      }))
-      .sort((a, b) => (b.pctAtingido ?? 0) - (a.pctAtingido ?? 0))
-  }, [activeActions, planCalculations])
-
+export function ChartsSection({ data }: ChartsSectionProps) {
   const { agencyRepData, paretoSummary } = useMemo(() => {
     const clients = data
       .filter((c) => c.venda !== null && c.venda > 0)
@@ -49,46 +35,7 @@ export function ChartsSection({ data, activeActions, planCalculations }: ChartsS
   }, [data])
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card className="shadow-sm flex flex-col">
-        <CardHeader className="pb-2 space-y-0">
-          <div>
-            <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-              <Flag className="h-4 w-4 text-amber-500" />
-              Planos de Meta Ativos
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {activePlanList.length > 0
-                ? `${activePlanList.length} agências com meta vigente`
-                : 'Nenhum plano ativo'}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-2 flex-1 min-h-[260px]">
-          {activePlanList.length > 0 ? (
-            <div className="max-h-[260px] overflow-y-auto space-y-0.5 pr-1">
-              {activePlanList.map((item, idx) => (
-                <div
-                  key={`${item.name}-${idx}`}
-                  className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors text-xs"
-                >
-                  <span className="font-medium truncate flex-1" title={item.name}>
-                    {item.name}
-                  </span>
-                  <span className="font-mono font-semibold text-amber-600 dark:text-amber-400 shrink-0">
-                    {item.pctAtingido !== null ? `${item.pctAtingido.toFixed(1)}%` : '—'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-[260px] text-sm text-muted-foreground">
-              Nenhum plano de meta ativo.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
+    <div className="grid gap-6">
       <Card className="shadow-sm flex flex-col">
         <CardHeader className="pb-2 space-y-0">
           <div>

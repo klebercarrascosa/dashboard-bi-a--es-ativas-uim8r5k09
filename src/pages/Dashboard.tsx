@@ -454,17 +454,9 @@ export default function Dashboard() {
           />
         ) : (
           <>
-            <KPICards
-              data={displayData}
-              activeTab={activeTab}
-              activeActions={actionsCoveringMonth}
-            />
+            <KPICards data={displayData} activeTab={activeTab} />
 
-            <ChartsSection
-              data={displayData}
-              activeActions={actionsCoveringMonth}
-              planCalculations={planCalculations}
-            />
+            <ChartsSection data={displayData} />
 
             <DataTable
               data={displayData}
