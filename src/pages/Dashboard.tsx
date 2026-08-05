@@ -10,6 +10,7 @@ import { ClientDetailDialog } from '@/components/ClientDetailDialog'
 import { ClientPlansDetailDialog } from '@/components/ClientPlansDetailDialog'
 import { ActivePlansView } from '@/components/ActivePlansView'
 import { ExecutivePlansKPI } from '@/components/ExecutivePlansKPI'
+import { ExecutivePlansView } from '@/components/ExecutivePlansView'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -82,7 +83,7 @@ export default function Dashboard() {
   const loadSheetData = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      if (activeTab === 'Planos de Meta Ativos') {
+      if (activeTab === 'Planos de Meta Ativos' || activeTab === 'Planos por Executivo') {
         setSheetData([])
         setLastUpdated(new Date())
         setIsRefreshing(false)
@@ -354,6 +355,18 @@ export default function Dashboard() {
             >
               Planos de Meta Ativos
             </Button>
+            <Button
+              variant={activeTab === 'Planos por Executivo' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('Planos por Executivo')}
+              className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
+                activeTab === 'Planos por Executivo'
+                  ? 'bg-primary text-primary-foreground font-bold shadow'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Por Executivo
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
@@ -438,6 +451,15 @@ export default function Dashboard() {
               onClientClick={setPlanDetailClientName}
             />
           </>
+        ) : activeTab === 'Planos por Executivo' ? (
+          <ExecutivePlansView
+            activeActions={filteredActiveActions}
+            planCalculations={planCalculations}
+            today={today}
+            onClientClick={setPlanDetailClientName}
+            onEditAction={handleEditAction}
+            onGenerateReport={handleGenerateReport}
+          />
         ) : (
           <>
             <KPICards
