@@ -43,7 +43,8 @@ export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIPro
     }
   }, [todayStr])
 
-  if (executiveStats.length === 0) return null
+  const totalActivePlans = executiveStats.reduce((s, e) => s + e.plans.length, 0)
+  const totalClients = executiveStats.reduce((s, e) => s + e.clientCount, 0)
 
   const selectedData = selectedExec
     ? (executiveStats.find((s) => s.exec === selectedExec) ?? null)
@@ -51,34 +52,61 @@ export function ExecutivePlansKPI({ activeActions, today }: ExecutivePlansKPIPro
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-3">
-        <CalendarDays className="h-4 w-4 text-amber-500" />
-        <span className="text-xs font-medium text-muted-foreground">
-          Data de referência: <span className="font-bold text-foreground">{formattedToday}</span>
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-amber-500" />
+          <span className="text-xs font-medium text-muted-foreground">
+            Data de referência: <span className="font-bold text-foreground">{formattedToday}</span>
+          </span>
+        </div>
+        {executiveStats.length > 0 && (
+          <div className="flex items-center gap-3 text-xs">
+            <span className="font-semibold flex items-center gap-1">
+              <Flag className="h-3 w-3 text-amber-500" />
+              {totalActivePlans} {totalActivePlans === 1 ? 'plano ativo' : 'planos ativos'}
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="font-semibold flex items-center gap-1">
+              <Users className="h-3 w-3 text-purple-500" />
+              {totalClients} {totalClients === 1 ? 'cliente' : 'clientes'}
+            </span>
+          </div>
+        )}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-        {executiveStats.map(({ exec, clientCount }) => (
-          <Card
-            key={exec}
-            className="cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent"
-            onClick={() => setSelectedExec(exec)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
-                  {exec}
+
+      {executiveStats.length === 0 ? (
+        <Card className="shadow-sm border-dashed">
+          <CardContent className="p-8 text-center">
+            <Users className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum plano de meta ativo encontrado para os filtros selecionados.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+          {executiveStats.map(({ exec, clientCount }) => (
+            <Card
+              key={exec}
+              className="cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent"
+              onClick={() => setSelectedExec(exec)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
+                    {exec}
+                  </p>
+                  <Flag className="h-3 w-3 text-amber-500 shrink-0" />
+                </div>
+                <p className="text-2xl font-extrabold">{clientCount}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {clientCount === 1 ? 'cliente ativo' : 'clientes ativos'}
                 </p>
-                <Flag className="h-3 w-3 text-amber-500 shrink-0" />
-              </div>
-              <p className="text-2xl font-extrabold">{clientCount}</p>
-              <p className="text-[10px] text-muted-foreground">
-                {clientCount === 1 ? 'cliente ativo' : 'clientes ativos'}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={!!selectedExec} onOpenChange={(open) => !open && setSelectedExec(null)}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">

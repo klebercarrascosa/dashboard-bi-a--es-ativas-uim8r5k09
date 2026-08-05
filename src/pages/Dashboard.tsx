@@ -16,6 +16,7 @@ import {
   SheetRow,
   fetchGoogleSheetData,
   aggregateSheetRowsByClient,
+  formatCurrency,
 } from '@/services/sheets'
 import {
   ActiveAction,
@@ -39,7 +40,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Filter, Calendar } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Filter, Calendar, TrendingUp } from 'lucide-react'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
@@ -217,6 +219,20 @@ export default function Dashboard() {
     .filter(Boolean)
     .sort()
 
+  const activeGrowthStats = (() => {
+    let totalMeta = 0
+    let totalSoma = 0
+    for (const a of filteredActiveActions) {
+      if (a.valor_meta && a.valor_meta > 0) totalMeta += a.valor_meta
+      totalSoma += planCalculations.get(a.id ?? '')?.somaVendida ?? 0
+    }
+    return {
+      totalMeta,
+      totalSoma,
+      growthPct: totalMeta > 0 ? (totalSoma / totalMeta) * 100 : 0,
+    }
+  })()
+
   const handleOpenActionModal = (client: SheetRow) => {
     setSelectedClientForAction(client)
     setSelectedActionId(null)
@@ -391,7 +407,28 @@ export default function Dashboard() {
 
         {activeTab === 'Planos de Meta Ativos' ? (
           <>
-            <ExecutivePlansKPI activeActions={kpiActiveActions} today={today} />
+            <ExecutivePlansKPI activeActions={filteredActiveActions} today={today} />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Card className="shadow-sm border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Crescimento em Vendas
+                    </p>
+                    <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400">
+                      <TrendingUp className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <h3 className="mt-2 text-2xl font-extrabold tracking-tight">
+                    {activeGrowthStats.growthPct.toFixed(1)}%
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {formatCurrency(activeGrowthStats.totalSoma)} de{' '}
+                    {formatCurrency(activeGrowthStats.totalMeta)}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
             <ActivePlansView
               activeActions={filteredActiveActions}
               planCalculations={planCalculations}

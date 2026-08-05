@@ -171,7 +171,7 @@ export function ActionModal({
       setTipoMeta(['Geral'])
       setIntervaloRelatorio('30 dias')
     }
-  }, [existingAction, client])
+  }, [existingAction?.id, client])
 
   if (!client) return null
 
