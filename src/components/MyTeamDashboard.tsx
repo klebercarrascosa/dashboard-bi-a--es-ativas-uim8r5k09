@@ -13,7 +13,7 @@ import {
 import { formatCurrency } from '@/services/sheets'
 import type { ActiveAction } from '@/services/actions'
 import type { PlanCalculation } from '@/services/plan-calculations'
-import { Trophy, Flag, Eye, FileText, Users, TrendingUp, ArrowLeft } from 'lucide-react'
+import { Flag, TrendingUp, Eye, FileText, Trophy, Users, ArrowLeft } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   Planejada: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
@@ -64,27 +64,26 @@ export function MyTeamDashboard({
 }: MyTeamDashboardProps) {
   const [selectedExec, setSelectedExec] = useState<string | null>(null)
 
-  const executiveRanking = useMemo(() => {
+  const executiveStats = useMemo(() => {
     const map = new Map<string, { count: number; totalMeta: number; totalSoma: number }>()
     for (const action of activeActions) {
-      if (!isActivePlan(action, today)) continue
       const exec = action.executive || 'Sem Executivo'
       if (!map.has(exec)) map.set(exec, { count: 0, totalMeta: 0, totalSoma: 0 })
       const s = map.get(exec)!
-      s.count++
-      s.totalMeta += action.valor_meta && action.valor_meta > 0 ? action.valor_meta : 0
+      if (action.valor_meta && action.valor_meta > 0) s.totalMeta += action.valor_meta
       s.totalSoma += planCalculations.get(action.id ?? '')?.somaVendida ?? 0
+      if (isActivePlan(action, today)) s.count++
     }
     return Array.from(map.entries())
       .map(([exec, s]) => ({
         exec,
-        count: s.count,
+        activePlanCount: s.count,
         growthPct: s.totalMeta > 0 ? (s.totalSoma / s.totalMeta) * 100 : 0,
       }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => b.activePlanCount - a.activePlanCount)
   }, [activeActions, planCalculations, today])
 
-  const selectedPlans = useMemo(() => {
+  const visibleActivePlans = useMemo(() => {
     if (!selectedExec) return []
     return activeActions
       .filter((a) => (a.executive || 'Sem Executivo') === selectedExec && isActivePlan(a, today))
@@ -94,62 +93,68 @@ export function MyTeamDashboard({
   if (selectedExec) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedExec(null)} className="gap-1">
-            <ArrowLeft className="h-4 w-4" /> Voltar ao ranking
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedExec(null)}
+            className="h-8 gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
           </Button>
-          <h2 className="text-lg font-bold">Planos ativos — {selectedExec}</h2>
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-            {selectedPlans.length}
-          </Badge>
+          <p className="text-sm font-semibold text-muted-foreground">
+            Planos ativos de <span className="text-foreground">{selectedExec}</span>{' '}
+            <Badge
+              variant="outline"
+              className="ml-1 bg-amber-500/10 text-amber-600 border-amber-500/30"
+            >
+              {visibleActivePlans.length}
+            </Badge>
+          </p>
         </div>
         <Card className="shadow-sm">
           <CardContent className="pt-0">
-            {selectedPlans.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">
-                Nenhum plano ativo encontrado.
-              </p>
+            {visibleActivePlans.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+                <Flag className="h-8 w-8 text-muted-foreground/50" />
+                <p>{selectedExec} não possui planos ativos no momento.</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs whitespace-nowrap">Cliente</TableHead>
-                      <TableHead className="text-xs whitespace-nowrap">Status</TableHead>
+                      <TableHead className="text-xs whitespace-nowrap">Cliente / Agência</TableHead>
                       <TableHead className="text-xs whitespace-nowrap">Prioridade</TableHead>
+                      <TableHead className="text-xs whitespace-nowrap">Status</TableHead>
                       <TableHead className="text-xs whitespace-nowrap">Período</TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">Meta 1</TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">Meta 3</TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">
-                        Vendido
+                        Soma Vendida
                       </TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">Falta</TableHead>
-                      <TableHead className="text-xs text-right whitespace-nowrap">%</TableHead>
+                      <TableHead className="text-xs text-right whitespace-nowrap">
+                        % Atingido
+                      </TableHead>
                       <TableHead className="text-xs text-right whitespace-nowrap">Ganho</TableHead>
                       <TableHead className="text-xs text-center whitespace-nowrap">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedPlans.map((action) => {
+                    {visibleActivePlans.map((action) => {
                       const calc = planCalculations.get(action.id ?? '')
                       return (
                         <TableRow key={action.id}>
                           <TableCell className="text-xs font-semibold">
                             <button
                               onClick={() => onClientClick(action.client_name)}
-                              className="text-left hover:text-primary hover:underline cursor-pointer"
+                              className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
                             >
                               {action.client_name}
                             </button>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${STATUS_COLORS[action.status] ?? STATUS_COLORS.Pendente}`}
-                            >
-                              {action.status}
-                            </Badge>
                           </TableCell>
                           <TableCell>
                             {action.priority && (
@@ -160,6 +165,14 @@ export function MyTeamDashboard({
                                 {action.priority}
                               </Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${STATUS_COLORS[action.status] ?? STATUS_COLORS.Pendente}`}
+                            >
+                              {action.status}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatDateBR(action.data_inicio)} → {formatDateBR(action.data_fim)}
@@ -179,7 +192,7 @@ export function MyTeamDashboard({
                           <TableCell className="text-xs text-right font-mono">
                             {calc?.quantoFalta != null
                               ? calc.quantoFalta <= 0
-                                ? '✅'
+                                ? '✅ Atingida'
                                 : formatCurrency(calc.quantoFalta)
                               : '—'}
                           </TableCell>
@@ -206,6 +219,7 @@ export function MyTeamDashboard({
                                 size="sm"
                                 onClick={() => onGenerateReport(action)}
                                 className="h-7 text-[11px] px-2 text-blue-600 hover:bg-blue-500/10"
+                                title="Gerar Relatório"
                               >
                                 <FileText className="h-3 w-3" />
                               </Button>
@@ -224,80 +238,52 @@ export function MyTeamDashboard({
     )
   }
 
-  const totalPlans = executiveRanking.reduce((s, e) => s + e.count, 0)
+  const totalActive = executiveStats.reduce((s, e) => s + e.activePlanCount, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div>
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 text-amber-500" />
-            Meu Time
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Ranking de executivos por planos de meta ativos
-          </p>
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-amber-500" />
+          <h2 className="text-base font-bold">Ranking de Executivos — Planos Ativos</h2>
         </div>
-        {executiveRanking.length > 0 && (
-          <div className="flex items-center gap-3 text-xs">
-            <span className="font-semibold flex items-center gap-1">
-              <Flag className="h-3 w-3 text-amber-500" />
-              {totalPlans} {totalPlans === 1 ? 'plano ativo' : 'planos ativos'}
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span className="font-semibold flex items-center gap-1">
-              <Users className="h-3 w-3 text-purple-500" />
-              {executiveRanking.length} {executiveRanking.length === 1 ? 'executivo' : 'executivos'}
-            </span>
-          </div>
-        )}
+        <span className="text-xs text-muted-foreground">{totalActive} planos ativos no total</span>
       </div>
-
-      {executiveRanking.length === 0 ? (
+      {executiveStats.length === 0 ? (
         <Card className="shadow-sm border-dashed">
           <CardContent className="p-8 text-center">
             <Users className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhum plano de meta ativo encontrado.</p>
+            <p className="text-sm text-muted-foreground">Nenhum plano de meta encontrado.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {executiveRanking.map(({ exec, count, growthPct }, idx) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+          {executiveStats.map(({ exec, activePlanCount, growthPct }, idx) => (
             <Card
               key={exec}
               className="cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent"
               onClick={() => setSelectedExec(exec)}
             >
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-bold shrink-0 ${
-                        idx === 0
-                          ? 'bg-amber-500 text-white'
-                          : idx === 1
-                            ? 'bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-200'
-                            : idx === 2
-                              ? 'bg-orange-400 text-white'
-                              : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {idx + 1}
-                    </span>
-                    <p className="text-sm font-semibold truncate" title={exec}>
-                      {exec}
-                    </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase truncate">
+                    {exec}
+                  </p>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {idx === 0 && activePlanCount > 0 && (
+                      <Trophy className="h-3 w-3 text-amber-500" />
+                    )}
+                    <Flag className="h-3 w-3 text-amber-500" />
                   </div>
-                  {idx === 0 && count > 0 && <Trophy className="h-4 w-4 text-amber-500 shrink-0" />}
                 </div>
-                <p className="text-3xl font-extrabold">{count}</p>
+                <p className="text-2xl font-extrabold">{activePlanCount}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {count === 1 ? 'plano ativo' : 'planos ativos'}
+                  {activePlanCount === 1 ? 'plano ativo' : 'planos ativos'}
                 </p>
-                <div className="mt-2 flex items-center gap-1">
+                <div className="mt-1.5 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-emerald-500" />
                   <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {growthPct.toFixed(1)}% cresc.
+                    {growthPct.toFixed(1)}%
                   </span>
                 </div>
               </CardContent>

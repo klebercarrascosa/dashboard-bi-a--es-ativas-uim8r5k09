@@ -6,12 +6,14 @@ import type { ActiveAction } from '@/services/actions'
 interface ExecutivePlansKPIProps {
   activeActions: ActiveAction[]
   today?: string
+  selectedExecutive?: string
   onExecutiveClick?: (executive: string) => void
 }
 
 export function ExecutivePlansKPI({
   activeActions,
   today,
+  selectedExecutive,
   onExecutiveClick,
 }: ExecutivePlansKPIProps) {
   const todayStr = today || new Date().toISOString().slice(0, 10)
@@ -79,7 +81,7 @@ export function ExecutivePlansKPI({
           {executiveStats.map(({ exec, planCount }, idx) => (
             <Card
               key={exec}
-              className="cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent"
+              className={`cursor-pointer hover:shadow-md hover:border-amber-500/40 transition-all border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent ${selectedExecutive === exec ? 'ring-2 ring-amber-500' : ''}`}
               onClick={() => onExecutiveClick?.(exec)}
             >
               <CardContent className="p-4">

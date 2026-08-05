@@ -42,6 +42,12 @@ const STATUS_COLORS: Record<string, string> = {
   Pendente: 'bg-slate-500/10 text-slate-600 border-slate-500/30',
 }
 
+const PRIORITY_COLORS: Record<string, string> = {
+  Alta: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
+  Média: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  Baixa: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+}
+
 function formatDateBR(dateStr?: string): string {
   if (!dateStr || dateStr.trim() === '') return '—'
   try {
@@ -171,6 +177,7 @@ export function ActivePlansView({
                     <TableHead className="text-xs whitespace-nowrap">Período</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Pagamento</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Tipo</TableHead>
+                    <TableHead className="text-xs whitespace-nowrap">Prioridade</TableHead>
                     <TableHead className="text-xs">Status</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 1</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
@@ -258,6 +265,16 @@ export function ActivePlansView({
                             </Badge>
                           ))}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {action.priority && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${PRIORITY_COLORS[action.priority] ?? ''}`}
+                          >
+                            {action.priority}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge

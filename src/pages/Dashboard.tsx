@@ -226,10 +226,28 @@ export default function Dashboard() {
     .filter(Boolean)
     .sort()
 
+  const activeOnlyActions = useMemo(() => {
+    return kpiActiveActions.filter((a) => {
+      if (a.status === 'Concluído') return false
+      if (!a.data_inicio || !a.data_fim) return false
+      return today >= a.data_inicio && today <= a.data_fim
+    })
+  }, [kpiActiveActions, today])
+
+  const kpiActions = activeOnlyActions.filter((a) => {
+    if (selectedRegional !== 'all' && a.regional !== selectedRegional) return false
+    return true
+  })
+
+  const filteredActivePlans = kpiActions.filter((a) => {
+    if (selectedExecutive !== 'all' && a.executive !== selectedExecutive) return false
+    return true
+  })
+
   const activeGrowthStats = (() => {
     let totalMeta = 0
     let totalSoma = 0
-    for (const a of filteredActiveActions) {
+    for (const a of filteredActivePlans) {
       if (a.valor_meta && a.valor_meta > 0) totalMeta += a.valor_meta
       totalSoma += planCalculations.get(a.id ?? '')?.somaVendida ?? 0
     }
@@ -373,18 +391,20 @@ export default function Dashboard() {
             >
               Por Executivo
             </Button>
-            <Button
-              variant={activeTab === 'Meu time' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('Meu time')}
-              className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
-                activeTab === 'Meu time'
-                  ? 'bg-primary text-primary-foreground font-bold shadow'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              Meu time
-            </Button>
+            {isAdmin && (
+              <Button
+                variant={activeTab === 'Meu time' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTab('Meu time')}
+                className={`h-8 text-xs whitespace-nowrap rounded-lg px-3 ml-1 ${
+                  activeTab === 'Meu time'
+                    ? 'bg-primary text-primary-foreground font-bold shadow'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                Meu time
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 border-t lg:border-t-0 pt-2 lg:pt-0">
@@ -439,11 +459,11 @@ export default function Dashboard() {
         {activeTab === 'Planos de Meta Ativos' ? (
           <>
             <ExecutivePlansKPI
-              activeActions={filteredActiveActions}
+              activeActions={kpiActions}
               today={today}
+              selectedExecutive={selectedExecutive}
               onExecutiveClick={(exec) => {
-                setPlanosExecInitialExec(exec)
-                setActiveTab('Planos por Executivo')
+                setSelectedExecutive(exec === selectedExecutive ? 'all' : exec)
               }}
             />
             <div className="grid gap-4 sm:grid-cols-3">
@@ -468,7 +488,7 @@ export default function Dashboard() {
               </Card>
             </div>
             <ActivePlansView
-              activeActions={filteredActiveActions}
+              activeActions={filteredActivePlans}
               planCalculations={planCalculations}
               onEditAction={handleEditAction}
               onGenerateReport={handleGenerateReport}
@@ -479,7 +499,7 @@ export default function Dashboard() {
         ) : activeTab === 'Planos por Executivo' ? (
           <ExecutivePlansView
             key={planosExecInitialExec ?? 'none'}
-            activeActions={filteredActiveActions}
+            activeActions={activeOnlyActions}
             planCalculations={planCalculations}
             today={today}
             onClientClick={setPlanDetailClientName}
@@ -489,7 +509,7 @@ export default function Dashboard() {
           />
         ) : activeTab === 'Meu time' ? (
           <MyTeamDashboard
-            activeActions={filteredActiveActions}
+            activeActions={activeOnlyActions}
             planCalculations={planCalculations}
             today={today}
             onClientClick={setPlanDetailClientName}
