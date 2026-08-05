@@ -245,25 +245,16 @@ export function PlanDetailReport({ action, calc, monthDataMap, planIndex }: Plan
           )}
           <div className="space-y-1">
             {calc.perMetaGains.map((mg) => (
-              <div
-                key={mg.metaNumber}
-                className={`flex items-center justify-between text-xs ${mg.isAchieved ? '' : 'opacity-40'}`}
-              >
-                <span className="flex items-center gap-1.5">
-                  {mg.isAchieved ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">✅</span>
-                  ) : (
-                    <span className="text-muted-foreground">⬜</span>
-                  )}
-                  <span className="text-muted-foreground">
-                    Meta {mg.metaNumber} ({mg.premioPercent}%)
+              <div key={mg.metaNumber} className="text-xs">
+                {mg.isAchieved ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    ✅ Meta {mg.metaNumber} atingida — Prêmio: {formatCurrency(mg.ganho)}
                   </span>
-                </span>
-                <span
-                  className={`font-mono font-semibold ${mg.isAchieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
-                >
-                  {mg.isAchieved ? formatCurrency(mg.ganho) : '—'}
-                </span>
+                ) : (
+                  <span className="text-muted-foreground opacity-50">
+                    ⬜ Meta {mg.metaNumber} ({mg.premioPercent}%) — Não atingida
+                  </span>
+                )}
               </div>
             ))}
           </div>
