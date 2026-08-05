@@ -100,6 +100,14 @@ export function getMonthlyBreakdown(
   })
 }
 
+export interface PerMetaGain {
+  metaNumber: 1 | 2 | 3
+  metaValue: number
+  premioPercent: number
+  isAchieved: boolean
+  ganho: number
+}
+
 export interface PlanCalculation {
   somaVendida: number
   quantoFalta: number | null
@@ -112,6 +120,8 @@ export interface PlanCalculation {
   nextDueDate: Date | null
   ganhoPremio: number
   tierAlcancado: 0 | 1 | 2 | 3
+  perMetaGains: PerMetaGain[]
+  totalGanhoPremio: number
 }
 
 export function calculatePlanMetrics(action: ActiveAction, somaVendida: number): PlanCalculation {
@@ -140,6 +150,10 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
   } else {
     isDue = true
   }
+  const tierGain = calculateTierGain(action, somaVendida)
+  const perMetaGains = calculatePerMetaGains(action, somaVendida)
+  const totalGanhoPremio = perMetaGains.reduce((sum, m) => sum + m.ganho, 0)
+
   return {
     somaVendida,
     quantoFalta,
@@ -150,8 +164,26 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     pctAtingidoMeta3,
     isDue,
     nextDueDate,
-    ...calculateTierGain(action, somaVendida),
+    ...tierGain,
+    perMetaGains,
+    totalGanhoPremio,
   }
+}
+
+export function calculatePerMetaGains(action: ActiveAction, somaVendida: number): PerMetaGain[] {
+  const metas: Array<{ metaNumber: 1 | 2 | 3; metaValue: number; premioPercent: number }> = [
+    { metaNumber: 1, metaValue: action.valor_meta ?? 0, premioPercent: action.premio_meta_1 ?? 0 },
+    { metaNumber: 2, metaValue: action.meta_2 ?? 0, premioPercent: action.premio_meta_2 ?? 0 },
+    { metaNumber: 3, metaValue: action.meta_3 ?? 0, premioPercent: action.premio_meta_3 ?? 0 },
+  ]
+  return metas.map((m) => ({
+    metaNumber: m.metaNumber,
+    metaValue: m.metaValue,
+    premioPercent: m.premioPercent,
+    isAchieved: m.metaValue > 0 && somaVendida >= m.metaValue,
+    ganho:
+      m.metaValue > 0 && somaVendida >= m.metaValue ? somaVendida * (m.premioPercent / 100) : 0,
+  }))
 }
 
 export function calculateTierGain(
@@ -237,7 +269,26 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
   if (calc.pctAtingidoMeta3 !== null)
     lines.push(`📈 % da Meta 3 Atingida: ${calc.pctAtingidoMeta3.toFixed(1)}%`)
 
-  if (calc.ganhoPremio > 0) {
+  if (calc.totalGanhoPremio > 0) {
+    lines.push('')
+    lines.push('🏆 PRÊMIO JÁ GANHO')
+    const pagamentosList = [
+      action.pagamento_mensal && 'Mensal',
+      action.pagamento_trimestral && 'Trimestral',
+      action.bonus_anual && 'Bônus Anual',
+    ].filter(Boolean)
+    if (pagamentosList.length > 0) {
+      lines.push(`📋 Pagamento: ${pagamentosList.join(', ')}`)
+    }
+    for (const mg of calc.perMetaGains) {
+      if (mg.isAchieved) {
+        lines.push(
+          `  ✅ Meta ${mg.metaNumber} (${mg.premioPercent}%): ${formatCurrencyBR(mg.ganho)}`,
+        )
+      }
+    }
+    lines.push(`💰 Total Já Ganho: ${formatCurrencyBR(calc.totalGanhoPremio)}`)
+  } else if (calc.ganhoPremio > 0) {
     lines.push('')
     lines.push(`🏆 Prêmio Calculado: ${formatCurrencyBR(calc.ganhoPremio)}`)
     lines.push(`📊 Tier Alcançado: Meta ${calc.tierAlcancado}`)

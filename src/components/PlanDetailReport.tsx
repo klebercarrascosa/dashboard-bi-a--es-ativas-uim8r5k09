@@ -16,6 +16,7 @@ import {
   Clock,
   FileText,
   CalendarDays,
+  Gift,
 } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -203,14 +204,75 @@ export function PlanDetailReport({ action, calc, monthDataMap, planIndex }: Plan
           value={formatCurrency(calc?.somaVendida ?? 0)}
         />
       </div>
-      {calc?.ganhoPremio != null && calc.ganhoPremio > 0 && (
-        <div className="flex items-center justify-between rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2">
-          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-            <Trophy className="h-4 w-4 text-emerald-500" /> Ganho (Meta {calc.tierAlcancado})
-          </span>
-          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-            {formatCurrency(calc.ganhoPremio)}
-          </span>
+      {calc?.perMetaGains != null && calc.perMetaGains.some((m) => m.isAchieved) && (
+        <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2.5 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Trophy className="h-4 w-4 text-emerald-500" />
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              Prêmio Já Ganho
+            </span>
+          </div>
+          {(action.pagamento_mensal || action.pagamento_trimestral || action.bonus_anual) && (
+            <div className="flex flex-wrap gap-1.5">
+              {action.pagamento_mensal && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30"
+                >
+                  <CalendarDays className="h-2.5 w-2.5 mr-1" />
+                  Mensal
+                </Badge>
+              )}
+              {action.pagamento_trimestral && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30"
+                >
+                  <CalendarDays className="h-2.5 w-2.5 mr-1" />
+                  Trimestral
+                </Badge>
+              )}
+              {action.bonus_anual && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30"
+                >
+                  <Gift className="h-2.5 w-2.5 mr-1" />
+                  Bônus Anual
+                </Badge>
+              )}
+            </div>
+          )}
+          <div className="space-y-1">
+            {calc.perMetaGains.map((mg) => (
+              <div
+                key={mg.metaNumber}
+                className={`flex items-center justify-between text-xs ${mg.isAchieved ? '' : 'opacity-40'}`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {mg.isAchieved ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">✅</span>
+                  ) : (
+                    <span className="text-muted-foreground">⬜</span>
+                  )}
+                  <span className="text-muted-foreground">
+                    Meta {mg.metaNumber} ({mg.premioPercent}%)
+                  </span>
+                </span>
+                <span
+                  className={`font-mono font-semibold ${mg.isAchieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                >
+                  {mg.isAchieved ? formatCurrency(mg.ganho) : '—'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between pt-1.5 border-t border-emerald-500/20">
+            <span className="text-xs font-bold text-muted-foreground">Total Já Ganho</span>
+            <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(calc.totalGanhoPremio)}
+            </span>
+          </div>
         </div>
       )}
       <Separator />
