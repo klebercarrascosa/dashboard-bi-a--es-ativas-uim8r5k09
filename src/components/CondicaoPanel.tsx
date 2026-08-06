@@ -48,9 +48,6 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
   const withCondicao = activeActions.filter(
     (a) => normalizeCondicao(a.condicao).length > 0 && a.status !== 'Concluído',
   )
-  const withoutCondicao = activeActions.filter(
-    (a) => normalizeCondicao(a.condicao).length === 0 && a.status !== 'Concluído',
-  )
 
   const counts = ALL_CONDITIONS.map((cond) => ({
     label: cond,
@@ -70,9 +67,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
     return a.client_name.localeCompare(b.client_name)
   })
 
-  const allClients = isAdmin
-    ? [...sorted, ...withoutCondicao.sort((a, b) => a.client_name.localeCompare(b.client_name))]
-    : sorted
+  const allClients = sorted
 
   return (
     <Card className="h-full flex flex-col">
@@ -116,7 +111,8 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
             <p className="text-xs text-muted-foreground">Nenhum cliente marcado ainda.</p>
             {isAdmin && (
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                Use os botões abaixo de cada cliente para definir as condições.
+                Marque uma condição (GOL, LATAM, AZUL TOP ou RC) para um cliente na tabela de
+                Detalhamento para vê-lo aqui.
               </p>
             )}
           </div>
