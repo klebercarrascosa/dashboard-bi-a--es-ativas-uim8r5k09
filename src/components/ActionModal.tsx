@@ -113,7 +113,7 @@ export function ActionModal({
   const [pagamentoTrimestral, setPagamentoTrimestral] = useState(false)
   const [bonusAnual, setBonusAnual] = useState(false)
   const [tipoMeta, setTipoMeta] = useState<string[]>(['Geral'])
-  const [condicao, setCondicao] = useState<string>('')
+  const [condicao, setCondicao] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -152,7 +152,13 @@ export function ActionModal({
       setBonusAnual(existingAction.bonus_anual ?? false)
       const tm = existingAction.tipo_meta
       setTipoMeta(Array.isArray(tm) ? tm : tm ? [tm] : ['Geral'])
-      setCondicao(existingAction.condicao || '')
+      setCondicao(
+        Array.isArray(existingAction.condicao)
+          ? existingAction.condicao
+          : existingAction.condicao
+            ? [existingAction.condicao]
+            : [],
+      )
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -171,7 +177,7 @@ export function ActionModal({
       setPagamentoTrimestral(false)
       setBonusAnual(false)
       setTipoMeta(['Geral'])
-      setCondicao('')
+      setCondicao([])
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction?.id, client])
@@ -225,7 +231,7 @@ export function ActionModal({
         pagamento_trimestral: pagamentoTrimestral,
         bonus_anual: bonusAnual,
         tipo_meta: tipoMeta,
-        condicao: condicao || '',
+        condicao: condicao,
       }
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)
@@ -508,20 +514,22 @@ export function ActionModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Condição (Companhia Aérea)</Label>
-              <Select value={condicao} onValueChange={(val: string) => setCondicao(val)}>
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Sem condição" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Sem condição</SelectItem>
-                  <SelectItem value="GOL">GOL</SelectItem>
-                  <SelectItem value="LATAM">LATAM</SelectItem>
-                  <SelectItem value="AZUL TOP">AZUL TOP</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Condição (Companhia Aérea) — Múltipla</Label>
+            <div className="flex items-center gap-4 flex-wrap">
+              {['GOL', 'LATAM', 'AZUL', 'RC'].map((cond) => (
+                <label key={cond} className="flex items-center gap-2 cursor-pointer text-xs">
+                  <Checkbox
+                    checked={condicao.includes(cond)}
+                    onCheckedChange={(checked) => {
+                      setCondicao((prev) =>
+                        checked ? [...prev, cond] : prev.filter((v) => v !== cond),
+                      )
+                    }}
+                  />
+                  <span>{cond}</span>
+                </label>
+              ))}
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SheetRow, formatCurrency, formatPercent } from '@/services/sheets'
 import { ActiveAction, findActivePlanForClient } from '@/services/actions'
+import { ConditionTick } from '@/components/ConditionTick'
 import { PlanCalculation } from '@/services/plan-calculations'
 import {
   Search,
@@ -59,6 +60,13 @@ function getBadgeStatusColor(status?: string) {
   }
 }
 
+const CONDICAO_COLORS: Record<string, string> = {
+  GOL: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
+  LATAM: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
+  AZUL: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
+  RC: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
+}
+
 interface DataTableProps {
   data: SheetRow[]
   activeActions: ActiveAction[]
@@ -68,6 +76,8 @@ interface DataTableProps {
   onGenerateReport?: (action: ActiveAction) => void
   onDeleteAction?: (action: ActiveAction) => void
   onClientClick?: (client: SheetRow) => void
+  isAdmin?: boolean
+  onUpdateCondition?: () => void
 }
 
 export function DataTable({
@@ -79,6 +89,8 @@ export function DataTable({
   onGenerateReport,
   onDeleteAction,
   onClientClick,
+  isAdmin = false,
+  onUpdateCondition,
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof SheetRow>('venda')
@@ -148,6 +160,7 @@ export function DataTable({
       'Quanto Falta',
       'Quanto Falta M2',
       'Quanto Falta M3',
+      'Condição',
       'Status Plano',
     ]
     const rows = sortedData.map((r) => {
@@ -172,6 +185,7 @@ export function DataTable({
         calc?.quantoFalta ?? '',
         calc?.quantoFaltaMeta2 ?? '',
         calc?.quantoFaltaMeta3 ?? '',
+        action?.condicao?.length ? action.condicao.join('; ') : '',
         action?.status ?? '',
       ]
     })
@@ -248,7 +262,7 @@ export function DataTable({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1500px] border-collapse">
+          <table className="w-full text-left text-xs min-w-[1650px] border-collapse">
             <thead className="bg-muted/50 text-muted-foreground border-y">
               <tr>
                 <th className={`${thBase}`}>Cliente Unificado</th>
@@ -296,13 +310,14 @@ export function DataTable({
                 <th className={`${thBase} text-right`}>Falta (M1)</th>
                 <th className={`${thBase} text-right`}>Falta (M2)</th>
                 <th className={`${thBase} text-right`}>Falta (M3)</th>
-                <th className={`${thBase} text-center border-l border-muted`}>Plano / Relatório</th>
+                <th className={`${thBase} text-center border-l border-muted`}>Condição</th>
+                <th className={`${thBase} text-center`}>Plano / Relatório</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={18} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={19} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -418,6 +433,29 @@ export function DataTable({
                         )}
                       </td>
                       <td className={`${tdBase} text-center border-l border-muted`}>
+                        {action?.id && isAdmin ? (
+                          <ConditionTick
+                            actionId={action.id}
+                            currentCondicao={action.condicao}
+                            onUpdate={onUpdateCondition}
+                          />
+                        ) : action?.condicao && action.condicao.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 justify-center">
+                            {action.condicao.map((c) => (
+                              <Badge
+                                key={c}
+                                variant="outline"
+                                className={`text-[10px] ${CONDICAO_COLORS[c] ?? ''}`}
+                              >
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className={`${tdBase} text-center`}>
                         <div className="flex items-center justify-center gap-1">
                           {action ? (
                             <>

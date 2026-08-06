@@ -14,8 +14,7 @@ import { MyTeamDashboard } from '@/components/MyTeamDashboard'
 import { ActivePlansRanking } from '@/components/ActivePlansRanking'
 import { ActivePlansKpi } from '@/components/ActivePlansKpi'
 import { ActiveAgenciesKpi } from '@/components/ActiveAgenciesKpi'
-import { CondicaoKpi } from '@/components/CondicaoKpi'
-import { CondicaoClientsTable } from '@/components/CondicaoClientsTable'
+import { CondicaoPanel } from '@/components/CondicaoPanel'
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -477,19 +476,18 @@ export default function Dashboard() {
           <>
             <KPICards data={displayData} activeTab={activeTab} />
 
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-2">
               <ActivePlansKpi activeActions={activeOnlyActions} today={today} isAdmin={isAdmin} />
               <ActiveAgenciesKpi
                 activeActions={activeOnlyActions}
                 today={today}
                 isAdmin={isAdmin}
               />
-              <CondicaoKpi activeActions={roleFilteredActions} />
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <ChartsSection data={displayData} />
-              <CondicaoClientsTable
+              <CondicaoPanel
                 activeActions={roleFilteredActions}
                 isAdmin={isAdmin}
                 onUpdate={loadActiveActions}
@@ -505,6 +503,8 @@ export default function Dashboard() {
               onGenerateReport={handleGenerateReport}
               onDeleteAction={handleDeleteAction}
               onClientClick={handleClientClick}
+              isAdmin={isAdmin}
+              onUpdateCondition={loadActiveActions}
             />
           </>
         )}
@@ -549,6 +549,8 @@ export default function Dashboard() {
         monthDataMap={monthDataMap}
         activeActions={roleFilteredActions}
         planCalculations={planCalculations}
+        isAdmin={isAdmin}
+        onUpdateCondition={loadActiveActions}
       />
 
       <ClientPlansDetailDialog
