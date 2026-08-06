@@ -16,7 +16,6 @@ import {
   TrendingDown,
   Eye,
   FilterX,
-  FileSpreadsheet,
   FileText,
   CheckCircle2,
   Trash2,
@@ -241,8 +240,7 @@ export function DataTable({
     <Card className="shadow-sm border-emerald-500/20">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent rounded-t-lg">
         <div>
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
+          <CardTitle className="text-base font-bold">
             Detalhamento de Carteira de Clientes
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">

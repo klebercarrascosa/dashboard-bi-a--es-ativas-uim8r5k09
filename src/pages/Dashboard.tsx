@@ -14,7 +14,7 @@ import { MyTeamDashboard } from '@/components/MyTeamDashboard'
 import { ActivePlansRanking } from '@/components/ActivePlansRanking'
 import { ActivePlansKpi } from '@/components/ActivePlansKpi'
 import { ActiveAgenciesKpi } from '@/components/ActiveAgenciesKpi'
-import { CondicaoPanel } from '@/components/CondicaoPanel'
+
 import {
   SHEET_MONTHS,
   DEFAULT_SPREADSHEET_ID,
@@ -494,15 +494,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ChartsSection data={displayData} />
-              <CondicaoPanel
-                activeActions={roleFilteredActions}
-                isAdmin={isAdmin}
-                onUpdate={loadActiveActions}
-                planCalculations={planCalculations}
-              />
-            </div>
+            <ChartsSection data={displayData} />
 
             <DataTable
               data={displayData}
