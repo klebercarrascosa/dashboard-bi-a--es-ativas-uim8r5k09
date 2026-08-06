@@ -502,11 +502,8 @@ export default function Dashboard() {
               planCalculations={planCalculations}
               onOpenActionModal={handleOpenActionModal}
               onCreateNewPlan={handleCreateNewPlan}
-              onGenerateReport={handleGenerateReport}
               onDeleteAction={handleDeleteAction}
               onClientClick={handleClientClick}
-              isAdmin={isAdmin}
-              onUpdateCondition={loadActiveActions}
             />
           </>
         )}
@@ -552,7 +549,6 @@ export default function Dashboard() {
         activeActions={roleFilteredActions}
         planCalculations={planCalculations}
         isAdmin={isAdmin}
-        onUpdateCondition={loadActiveActions}
       />
 
       <ClientPlansDetailDialog
@@ -563,7 +559,7 @@ export default function Dashboard() {
         planCalculations={planCalculations}
         monthDataMap={monthDataMap}
         isAdmin={isAdmin}
-        onUpdateCondition={loadActiveActions}
+        onUpdate={loadActiveActions}
       />
     </div>
   )

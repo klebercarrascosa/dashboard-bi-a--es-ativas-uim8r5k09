@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SheetRow, formatCurrency, formatPercent } from '@/services/sheets'
 import { ActiveAction, findActivePlanForClient } from '@/services/actions'
-import { ConditionTick } from '@/components/ConditionTick'
 import { PlanCalculation } from '@/services/plan-calculations'
 import {
   Search,
@@ -16,7 +15,6 @@ import {
   TrendingDown,
   Eye,
   FilterX,
-  FileText,
   CheckCircle2,
   Trash2,
 } from 'lucide-react'
@@ -59,24 +57,14 @@ function getBadgeStatusColor(status?: string) {
   }
 }
 
-const CONDICAO_COLORS: Record<string, string> = {
-  GOL: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
-  LATAM: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
-  AZUL: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
-  RC: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
-}
-
 interface DataTableProps {
   data: SheetRow[]
   activeActions: ActiveAction[]
   planCalculations?: Map<string, PlanCalculation>
   onOpenActionModal: (client: SheetRow) => void
   onCreateNewPlan?: (client: SheetRow) => void
-  onGenerateReport?: (action: ActiveAction) => void
   onDeleteAction?: (action: ActiveAction) => void
   onClientClick?: (client: SheetRow) => void
-  isAdmin?: boolean
-  onUpdateCondition?: () => void
 }
 
 export function DataTable({
@@ -85,11 +73,8 @@ export function DataTable({
   planCalculations = new Map<string, PlanCalculation>(),
   onOpenActionModal,
   onCreateNewPlan,
-  onGenerateReport,
   onDeleteAction,
   onClientClick,
-  isAdmin = false,
-  onUpdateCondition,
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof SheetRow>('venda')
@@ -175,7 +160,6 @@ export function DataTable({
       'Quanto Falta',
       'Quanto Falta M2',
       'Quanto Falta M3',
-      'Condição',
       'Status Plano',
     ]
     const rows = sortedData.map((r) => {
@@ -201,7 +185,6 @@ export function DataTable({
         calc?.quantoFalta ?? '',
         calc?.quantoFaltaMeta2 ?? '',
         calc?.quantoFaltaMeta3 ?? '',
-        action?.condicao?.length ? action.condicao.join('; ') : '',
         action?.status ?? '',
       ]
     })
@@ -322,14 +305,13 @@ export function DataTable({
                 <th className={`${thBase} text-right`}>Falta (M1)</th>
                 <th className={`${thBase} text-right`}>Falta (M2)</th>
                 <th className={`${thBase} text-right`}>Falta (M3)</th>
-                <th className={`${thBase} text-center border-l border-muted`}>Condição</th>
-                <th className={`${thBase} text-center`}>Plano / Relatório</th>
+                <th className={`${thBase} text-center`}>Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {visibleData.length === 0 ? (
                 <tr>
-                  <td colSpan={17} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={16} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -444,29 +426,6 @@ export function DataTable({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className={`${tdBase} text-center border-l border-muted`}>
-                        {action?.id && isAdmin ? (
-                          <ConditionTick
-                            actionId={action.id}
-                            currentCondicao={action.condicao}
-                            onUpdate={onUpdateCondition}
-                          />
-                        ) : action?.condicao && action.condicao.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 justify-center">
-                            {action.condicao.map((c) => (
-                              <Badge
-                                key={c}
-                                variant="outline"
-                                className={`text-[10px] ${CONDICAO_COLORS[c] ?? ''}`}
-                              >
-                                {c}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
                       <td className={`${tdBase} text-center`}>
                         <div className="flex items-center justify-center gap-1">
                           {action ? (
@@ -489,17 +448,6 @@ export function DataTable({
                                   title="Criar novo plano"
                                 >
                                   <Plus className="h-3 w-3" />
-                                </Button>
-                              )}
-                              {onGenerateReport && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => onGenerateReport(action)}
-                                  className="h-7 text-[11px] px-2 text-blue-600 hover:bg-blue-500/10"
-                                  title="Gerar Relatório"
-                                >
-                                  <FileText className="h-3 w-3" />
                                 </Button>
                               )}
                               {calc?.isDue && (

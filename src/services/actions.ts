@@ -25,17 +25,9 @@ export interface ActiveAction {
   pagamento_mensal?: boolean
   pagamento_trimestral?: boolean
   bonus_anual?: boolean
-  tipo_meta?: string[]
-  condicao?: string[]
+  tipo_meta?: string | string[]
   created?: string
   updated?: string
-}
-
-export function normalizeCondicao(condicao: string[] | string | undefined | null): string[] {
-  if (!condicao) return []
-  if (Array.isArray(condicao)) return condicao.filter((c) => c && c.trim() !== '')
-  if (typeof condicao === 'string' && condicao.trim() !== '') return [condicao]
-  return []
 }
 
 export const getActiveActions = () => pb.collection('active_actions').getFullList<ActiveAction>()

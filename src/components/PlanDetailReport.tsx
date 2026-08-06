@@ -18,7 +18,6 @@ import {
   CalendarDays,
   Gift,
 } from 'lucide-react'
-import { ConditionSelector } from '@/components/ConditionSelector'
 import { GoalProgressBars } from '@/components/GoalProgressBars'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -113,7 +112,6 @@ interface PlanDetailReportProps {
   monthDataMap: Map<string, SheetRow[]>
   planIndex?: number
   isAdmin?: boolean
-  onUpdateCondition?: () => void
 }
 
 export function PlanDetailReport({
@@ -122,7 +120,6 @@ export function PlanDetailReport({
   monthDataMap,
   planIndex,
   isAdmin = false,
-  onUpdateCondition,
 }: PlanDetailReportProps) {
   const breakdown = getMonthlyBreakdown(
     monthDataMap,
@@ -131,11 +128,6 @@ export function PlanDetailReport({
     action.data_inicio,
     action.data_fim,
   )
-  const tipoMeta = Array.isArray(action.tipo_meta)
-    ? action.tipo_meta
-    : action.tipo_meta
-      ? [action.tipo_meta]
-      : ['Geral']
   const pagamentos =
     [
       action.pagamento_mensal && 'Mensal',
@@ -170,14 +162,6 @@ export function PlanDetailReport({
           )}
         </div>
       </div>
-      {(isAdmin || action.condicao) && (
-        <ConditionSelector
-          actionId={action.id!}
-          currentCondicao={action.condicao}
-          isAdmin={isAdmin}
-          onUpdate={onUpdateCondition}
-        />
-      )}
       <div className="grid grid-cols-3 gap-2">
         <MetaCard
           label="Meta 1"
@@ -295,11 +279,7 @@ export function PlanDetailReport({
       )}
       <Separator />
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-        <InfoRow
-          icon={Tag}
-          label="Tipo"
-          value={tipoMeta.map((t) => (t === 'Por Cia' ? 'Por Cia' : 'Geral')).join(' + ')}
-        />
+        <InfoRow icon={Tag} label="Tipo" value="Geral" />
         <InfoRow icon={Bell} label="Intervalo Rel." value={action.intervalo_relatorio || '—'} />
         <InfoRow
           icon={Calendar}

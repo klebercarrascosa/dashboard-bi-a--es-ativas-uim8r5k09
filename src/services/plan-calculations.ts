@@ -277,7 +277,7 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
     `🏢 Cliente/Agência: ${action.client_name}`,
     `👤 Executivo: ${action.executive}`,
     `📍 Regional: ${action.regional}`,
-    `🏷️ Tipo de Meta: ${(Array.isArray(action.tipo_meta) ? action.tipo_meta : action.tipo_meta ? [action.tipo_meta] : ['Geral']).map((t) => (t === 'Por Cia' ? 'Meta por Cia' : 'Meta Geral')).join(' + ')}`,
+    `🏷️ Tipo de Meta: Meta Geral`,
     `📅 Período: ${formatDateBR(action.data_inicio)} a ${formatDateBR(action.data_fim)}`,
     '',
     `💰 Meta 1: ${formatCurrencyBR(action.valor_meta && action.valor_meta > 0 ? action.valor_meta : null)}`,

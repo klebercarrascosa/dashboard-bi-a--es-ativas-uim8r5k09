@@ -112,8 +112,6 @@ export function ActionModal({
   const [pagamentoMensal, setPagamentoMensal] = useState(false)
   const [pagamentoTrimestral, setPagamentoTrimestral] = useState(false)
   const [bonusAnual, setBonusAnual] = useState(false)
-  const [tipoMeta, setTipoMeta] = useState<string[]>(['Geral'])
-  const [condicao, setCondicao] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
@@ -150,15 +148,6 @@ export function ActionModal({
       setPagamentoMensal(existingAction.pagamento_mensal ?? false)
       setPagamentoTrimestral(existingAction.pagamento_trimestral ?? false)
       setBonusAnual(existingAction.bonus_anual ?? false)
-      const tm = existingAction.tipo_meta
-      setTipoMeta(Array.isArray(tm) ? tm : tm ? [tm] : ['Geral'])
-      setCondicao(
-        Array.isArray(existingAction.condicao)
-          ? existingAction.condicao
-          : existingAction.condicao
-            ? [existingAction.condicao]
-            : [],
-      )
       setIntervaloRelatorio(existingAction.intervalo_relatorio || '30 dias')
     } else {
       setStatus('Em Negociação')
@@ -176,8 +165,6 @@ export function ActionModal({
       setPagamentoMensal(false)
       setPagamentoTrimestral(false)
       setBonusAnual(false)
-      setTipoMeta(['Geral'])
-      setCondicao([])
       setIntervaloRelatorio('30 dias')
     }
   }, [existingAction?.id, client])
@@ -230,8 +217,7 @@ export function ActionModal({
         pagamento_mensal: pagamentoMensal,
         pagamento_trimestral: pagamentoTrimestral,
         bonus_anual: bonusAnual,
-        tipo_meta: tipoMeta,
-        condicao: condicao,
+        tipo_meta: 'Geral',
       }
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)
@@ -298,38 +284,6 @@ export function ActionModal({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Tipo de Meta</Label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer text-xs">
-                <Checkbox
-                  checked={tipoMeta.includes('Geral')}
-                  onCheckedChange={(checked) => {
-                    setTipoMeta((prev) =>
-                      checked ? [...prev, 'Geral'] : prev.filter((v) => v !== 'Geral'),
-                    )
-                  }}
-                />
-                <span>Meta Geral</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-xs">
-                <Checkbox
-                  checked={tipoMeta.includes('Por Cia')}
-                  onCheckedChange={(checked) => {
-                    setTipoMeta((prev) =>
-                      checked ? [...prev, 'Por Cia'] : prev.filter((v) => v !== 'Por Cia'),
-                    )
-                  }}
-                />
-                <span>Meta por Cia</span>
-              </label>
-            </div>
-            {tipoMeta.includes('Por Cia') && (
-              <p className="text-[11px] text-muted-foreground">
-                Insira os percentuais de prêmio manualmente para meta por companhia
-              </p>
-            )}
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Data Início</Label>
@@ -511,25 +465,6 @@ export function ActionModal({
                   <SelectItem value="Baixa">Baixa 🍃</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Condição (Companhia Aérea) — Múltipla</Label>
-            <div className="flex items-center gap-4 flex-wrap">
-              {['GOL', 'LATAM', 'AZUL', 'RC'].map((cond) => (
-                <label key={cond} className="flex items-center gap-2 cursor-pointer text-xs">
-                  <Checkbox
-                    checked={condicao.includes(cond)}
-                    onCheckedChange={(checked) => {
-                      setCondicao((prev) =>
-                        checked ? [...prev, cond] : prev.filter((v) => v !== cond),
-                      )
-                    }}
-                  />
-                  <span>{cond}</span>
-                </label>
-              ))}
             </div>
           </div>
 

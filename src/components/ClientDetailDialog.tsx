@@ -8,7 +8,6 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ConditionSelector } from '@/components/ConditionSelector'
 import { SheetRow, formatCurrency } from '@/services/sheets'
 import { ActiveAction, findActivePlanForClient } from '@/services/actions'
 import { PlanCalculation, getMonthlyBreakdown } from '@/services/plan-calculations'
@@ -25,7 +24,6 @@ interface ClientDetailDialogProps {
   activeActions: ActiveAction[]
   planCalculations: Map<string, PlanCalculation>
   isAdmin?: boolean
-  onUpdateCondition?: () => void
 }
 
 export function ClientDetailDialog({
@@ -37,7 +35,6 @@ export function ClientDetailDialog({
   activeActions,
   planCalculations,
   isAdmin = false,
-  onUpdateCondition,
 }: ClientDetailDialogProps) {
   if (!client) return null
 
@@ -189,19 +186,6 @@ export function ClientDetailDialog({
                 ` (${salesPctChange >= 0 ? '+' : ''}${salesPctChange.toFixed(1)}%)`}
             </span>
           </div>
-        )}
-
-        {action?.id && (
-          <Card className="border-sky-500/20 bg-sky-500/5">
-            <CardContent className="p-3">
-              <ConditionSelector
-                actionId={action.id}
-                currentCondicao={action.condicao}
-                isAdmin={isAdmin}
-                onUpdate={onUpdateCondition}
-              />
-            </CardContent>
-          </Card>
         )}
 
         {action && calc && (
