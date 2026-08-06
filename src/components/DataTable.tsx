@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -95,9 +95,28 @@ export function DataTable({
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof SheetRow>('venda')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [visibleCount, setVisibleCount] = useState(20)
   const [deleteTarget, setDeleteTarget] = useState<ActiveAction | null>(null)
-  const pageSize = 8
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + 20)
+        }
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    setVisibleCount(20)
+  }, [searchTerm, sortField, sortDirection])
 
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
@@ -127,11 +146,7 @@ export function DataTable({
     [filteredData, sortField, sortDirection],
   )
 
-  const totalPages = Math.ceil(sortedData.length / pageSize) || 1
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return sortedData.slice(start, start + pageSize)
-  }, [sortedData, currentPage])
+  const visibleData = useMemo(() => sortedData.slice(0, visibleCount), [sortedData, visibleCount])
 
   const handleSort = (field: keyof SheetRow) => {
     if (sortField === field) setSortDirection((p) => (p === 'asc' ? 'desc' : 'asc'))
@@ -242,7 +257,6 @@ export function DataTable({
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
-                setCurrentPage(1)
               }}
               className="pl-9 h-9 text-xs"
             />
@@ -318,14 +332,14 @@ export function DataTable({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {paginatedData.length === 0 ? (
+              {visibleData.length === 0 ? (
                 <tr>
                   <td colSpan={20} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((row) => {
+                visibleData.map((row) => {
                   if (!row) return null
                   const action = getActionForClient(row.clienteUnificado)
                   const calc = action ? planCalculations?.get(action.id ?? '') : null
@@ -539,30 +553,11 @@ export function DataTable({
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between px-4 py-3 border-t text-xs text-muted-foreground">
-          <p>
-            Página {currentPage} de {totalPages} ({sortedData.length} itens)
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="h-7 text-xs px-2"
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="h-7 text-xs px-2"
-            >
-              Próxima
-            </Button>
-          </div>
+        <div className="px-4 py-3 border-t text-xs text-muted-foreground text-center">
+          {visibleCount < sortedData.length
+            ? `Exibindo ${visibleCount} de ${sortedData.length} registros...`
+            : `${sortedData.length} registros exibidos`}
+          <div ref={sentinelRef} className="h-4" />
         </div>
       </CardContent>
 

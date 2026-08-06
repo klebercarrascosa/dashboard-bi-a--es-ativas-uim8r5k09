@@ -156,6 +156,7 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
   }
   const soldForPremium = action.valor_vendido ?? 0
   const tierGain = calculateTierGain(action, soldForPremium)
+  const projectedTierGain = calculateTierGain(action, somaVendida)
   const perMetaGains = calculatePerMetaGains(action, soldForPremium)
   const totalGanhoPremio = perMetaGains.reduce((sum, m) => sum + m.ganho, 0)
 
