@@ -278,13 +278,10 @@ export function DataTable({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1750px] border-collapse">
+          <table className="w-full text-left text-xs min-w-[1400px] border-collapse">
             <thead className="bg-muted/50 text-muted-foreground border-y">
               <tr>
                 <th className={`${thBase}`}>Cliente Unificado</th>
-                <th className={`${thBase}`}>Executivo</th>
-                <th className={`${thBase}`}>CPF / CNPJ</th>
-                <th className={`${thBase}`}>Regional</th>
                 <th
                   className={`${thBase} text-right cursor-pointer hover:bg-muted`}
                   onClick={() => handleSort('venda')}
@@ -334,7 +331,7 @@ export function DataTable({
             <tbody className="divide-y">
               {visibleData.length === 0 ? (
                 <tr>
-                  <td colSpan={20} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={17} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -355,15 +352,6 @@ export function DataTable({
                         onClick={() => onClientClick?.(row)}
                       >
                         {row.clienteUnificado}
-                      </td>
-                      <td className={`${tdBase} text-muted-foreground`}>{row.executivo}</td>
-                      <td className={`${tdBase} font-mono text-[11px] text-muted-foreground`}>
-                        {row.cpfCnpj}
-                      </td>
-                      <td className={`${tdBase}`}>
-                        <Badge variant="outline" className="font-normal text-[10px] bg-slate-500/5">
-                          {row.regional}
-                        </Badge>
                       </td>
                       <td
                         className={`${tdBase} text-right font-bold font-mono text-emerald-600 dark:text-emerald-400`}
