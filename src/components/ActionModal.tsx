@@ -225,7 +225,7 @@ export function ActionModal({
         pagamento_trimestral: pagamentoTrimestral,
         bonus_anual: bonusAnual,
         tipo_meta: tipoMeta,
-        condicao: condicao || undefined,
+        condicao: condicao || '',
       }
       if (existingAction && existingAction.id) {
         await updateActiveAction(existingAction.id, commonData)

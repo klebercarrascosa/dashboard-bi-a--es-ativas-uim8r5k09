@@ -489,7 +489,11 @@ export default function Dashboard() {
 
             <div className="grid gap-4 lg:grid-cols-2">
               <ChartsSection data={displayData} />
-              <CondicaoClientsTable activeActions={roleFilteredActions} />
+              <CondicaoClientsTable
+                activeActions={roleFilteredActions}
+                isAdmin={isAdmin}
+                onUpdate={loadActiveActions}
+              />
             </div>
 
             <DataTable
@@ -554,6 +558,8 @@ export default function Dashboard() {
         allActions={roleFilteredActions}
         planCalculations={planCalculations}
         monthDataMap={monthDataMap}
+        isAdmin={isAdmin}
+        onUpdateCondition={loadActiveActions}
       />
     </div>
   )

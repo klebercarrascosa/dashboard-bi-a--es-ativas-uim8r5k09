@@ -21,6 +21,8 @@ interface ClientPlansDetailDialogProps {
   allActions: ActiveAction[]
   planCalculations: Map<string, PlanCalculation>
   monthDataMap: Map<string, SheetRow[]>
+  isAdmin?: boolean
+  onUpdateCondition?: () => void
 }
 
 export function ClientPlansDetailDialog({
@@ -30,6 +32,8 @@ export function ClientPlansDetailDialog({
   allActions,
   planCalculations,
   monthDataMap,
+  isAdmin = false,
+  onUpdateCondition,
 }: ClientPlansDetailDialogProps) {
   if (!clientName) return null
   const norm = clientName.trim().toLowerCase()
@@ -134,6 +138,8 @@ export function ClientPlansDetailDialog({
                   calc={planCalculations.get(action.id ?? '') ?? null}
                   monthDataMap={monthDataMap}
                   planIndex={idx}
+                  isAdmin={isAdmin}
+                  onUpdateCondition={onUpdateCondition}
                 />
               </CardContent>
             </Card>
