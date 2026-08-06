@@ -19,6 +19,7 @@ import {
   Gift,
 } from 'lucide-react'
 import { ConditionSelector } from '@/components/ConditionSelector'
+import { GoalProgressBars } from '@/components/GoalProgressBars'
 
 const STATUS_COLORS: Record<string, string> = {
   Planejada: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
@@ -200,6 +201,14 @@ export function PlanDetailReport({
           falta={calc?.quantoFaltaMeta3}
         />
       </div>
+      {calc && (action.valor_vendido ?? 0) > 0 && (
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Progresso das Metas &amp; Prêmio Provisório
+          </p>
+          <GoalProgressBars action={action} calc={calc} />
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <InfoRow
           icon={Trophy}

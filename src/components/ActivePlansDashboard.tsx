@@ -153,7 +153,7 @@ export function ActivePlansDashboard({
           </Button>
         )}
       </div>
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border-border">
         <CardContent className="pt-0">
           {filteredActions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">

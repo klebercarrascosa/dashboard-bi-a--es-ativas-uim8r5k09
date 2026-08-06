@@ -13,6 +13,7 @@ import { SheetRow, formatCurrency } from '@/services/sheets'
 import { ActiveAction, findActivePlanForClient } from '@/services/actions'
 import { PlanCalculation, getMonthlyBreakdown } from '@/services/plan-calculations'
 import { getClientPositionChange } from '@/services/position-tracking'
+import { GoalProgressBars } from '@/components/GoalProgressBars'
 import { ArrowUp, ArrowDown, Minus, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface ClientDetailDialogProps {
@@ -295,8 +296,17 @@ export function ClientDetailDialog({
                 )}
               </div>
 
+              {calc && (action.valor_vendido ?? 0) > 0 && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Progresso das Metas &amp; Prêmio Provisório
+                  </p>
+                  <GoalProgressBars action={action} calc={calc} />
+                </div>
+              )}
+
               {breakdown.length > 0 && (
-                <div className="pt-2 border-t">
+                <div className="pt-2 border-t border-border">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">
                     Detalhamento Mensal (Período do Plano)
                   </p>

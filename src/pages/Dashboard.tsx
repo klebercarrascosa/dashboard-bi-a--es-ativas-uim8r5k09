@@ -317,10 +317,10 @@ export default function Dashboard() {
       />
 
       <main
-        className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6"
+        className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6"
         style={{ zoom: `${zoom}%` }}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card border rounded-xl p-3 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card border border-border rounded-xl p-3 shadow-sm">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
             <Calendar className="h-4 w-4 text-emerald-500 shrink-0 ml-1" />
             <span className="text-xs text-muted-foreground whitespace-nowrap mr-2 font-medium">
@@ -491,6 +491,7 @@ export default function Dashboard() {
                 activeActions={roleFilteredActions}
                 isAdmin={isAdmin}
                 onUpdate={loadActiveActions}
+                planCalculations={planCalculations}
               />
             </div>
 

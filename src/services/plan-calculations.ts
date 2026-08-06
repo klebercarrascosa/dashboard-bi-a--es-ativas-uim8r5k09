@@ -122,6 +122,9 @@ export interface PlanCalculation {
   tierAlcancado: 0 | 1 | 2 | 3
   perMetaGains: PerMetaGain[]
   totalGanhoPremio: number
+  provisionalPrizeMeta1: number
+  provisionalPrizeMeta2: number
+  provisionalPrizeMeta3: number
 }
 
 export function calculatePlanMetrics(action: ActiveAction, somaVendida: number): PlanCalculation {
@@ -155,6 +158,22 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
   const perMetaGains = calculatePerMetaGains(action, soldForPremium)
   const totalGanhoPremio = perMetaGains.reduce((sum, m) => sum + m.ganho, 0)
 
+  const provisionalPrizeMeta1 = calculateProvisionalPrize(
+    soldForPremium,
+    action.valor_meta ?? 0,
+    action.premio_meta_1 ?? 0,
+  )
+  const provisionalPrizeMeta2 = calculateProvisionalPrize(
+    soldForPremium,
+    action.meta_2 ?? 0,
+    action.premio_meta_2 ?? 0,
+  )
+  const provisionalPrizeMeta3 = calculateProvisionalPrize(
+    soldForPremium,
+    action.meta_3 ?? 0,
+    action.premio_meta_3 ?? 0,
+  )
+
   return {
     somaVendida,
     quantoFalta,
@@ -168,7 +187,20 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     ...tierGain,
     perMetaGains,
     totalGanhoPremio,
+    provisionalPrizeMeta1,
+    provisionalPrizeMeta2,
+    provisionalPrizeMeta3,
   }
+}
+
+export function calculateProvisionalPrize(
+  valorVendido: number,
+  metaValue: number,
+  premioPercent: number,
+): number {
+  if (metaValue <= 0 || premioPercent <= 0 || valorVendido <= 0) return 0
+  const achievedCoefficient = Math.min(valorVendido / metaValue, 1)
+  return valorVendido * (premioPercent / 100) * achievedCoefficient
 }
 
 export function calculatePerMetaGains(action: ActiveAction, somaVendida: number): PerMetaGain[] {

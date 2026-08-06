@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { ConditionSelector } from '@/components/ConditionSelector'
+import { GoalProgressBars } from '@/components/GoalProgressBars'
 import { normalizeCondicao, type ActiveAction } from '@/services/actions'
+import type { PlanCalculation } from '@/services/plan-calculations'
 import { Plane } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +19,7 @@ interface CondicaoPanelProps {
   activeActions: ActiveAction[]
   isAdmin: boolean
   onUpdate?: () => void
+  planCalculations?: Map<string, PlanCalculation>
 }
 
 const CONDICAO_STYLES: Record<string, { color: string; bg: string; border: string }> = {
@@ -44,7 +47,12 @@ const CONDICAO_STYLES: Record<string, { color: string; bg: string; border: strin
 
 const ALL_CONDITIONS = ['GOL', 'LATAM', 'AZUL', 'RC'] as const
 
-export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPanelProps) {
+export function CondicaoPanel({
+  activeActions,
+  isAdmin,
+  onUpdate,
+  planCalculations,
+}: CondicaoPanelProps) {
   const withCondicao = activeActions.filter(
     (a) => normalizeCondicao(a.condicao).length > 0 && a.status !== 'Concluído',
   )
@@ -70,8 +78,8 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
   const allClients = sorted
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 border-b">
+    <Card className="h-full flex flex-col border-border shadow-sm">
+      <CardHeader className="pb-3 border-b border-border">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <Plane className="h-4 w-4 text-sky-500" />
@@ -120,7 +128,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
           <div className="overflow-auto max-h-[340px]">
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10">
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent border-border">
                   <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
                     Cliente
                   </TableHead>
@@ -130,6 +138,9 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
                   <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
                     Condições
                   </TableHead>
+                  <TableHead className="text-[10px] font-semibold uppercase tracking-wider min-w-[200px]">
+                    Progresso Metas
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -137,11 +148,12 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
                   const conditions = normalizeCondicao(action.condicao)
                   const hasCondicao = conditions.length > 0
                   const firstCond = conditions[0]
+                  const calc = planCalculations?.get(action.id ?? '') ?? null
                   return (
                     <TableRow
                       key={action.id}
                       className={cn(
-                        'transition-colors',
+                        'transition-colors border-border',
                         hasCondicao && firstCond && CONDICAO_STYLES[firstCond]?.bg,
                       )}
                     >
@@ -179,6 +191,9 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="py-2.5 min-w-[200px]">
+                        <GoalProgressBars action={action} calc={calc} compact />
                       </TableCell>
                     </TableRow>
                   )
