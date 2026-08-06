@@ -458,6 +458,10 @@ export default function Dashboard() {
             onEditAction={handleEditAction}
             onGenerateReport={handleGenerateReport}
             onClientClick={setPlanDetailClientName}
+            onRefresh={() => {
+              loadActiveActions()
+              loadMonthDataMap()
+            }}
           />
         ) : activeTab === 'Planos por Executivo' ? (
           <ExecutivePlansView

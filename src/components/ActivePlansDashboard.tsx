@@ -20,7 +20,8 @@ import {
 import { formatCurrency } from '@/services/sheets'
 import type { ActiveAction } from '@/services/actions'
 import type { PlanCalculation } from '@/services/plan-calculations'
-import { Flag, Eye, FileText, Users, Trophy } from 'lucide-react'
+import { Flag, Eye, FileText, Users, Trophy, Download, RefreshCw, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 const STATUS_COLORS: Record<string, string> = {
   Planejada: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
@@ -34,6 +35,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   Média: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
   Baixa: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
 }
+
 function formatDateBR(dateStr?: string): string {
   if (!dateStr || !dateStr.trim()) return '—'
   try {
@@ -43,29 +45,38 @@ function formatDateBR(dateStr?: string): string {
     return '—'
   }
 }
+
 interface ActivePlansDashboardProps {
   activeActions: ActiveAction[]
   planCalculations: Map<string, PlanCalculation>
   onEditAction: (action: ActiveAction) => void
   onGenerateReport: (action: ActiveAction) => void
   onClientClick: (clientName: string) => void
+  onRefresh?: () => void
 }
+
 export function ActivePlansDashboard({
   activeActions,
   planCalculations,
   onEditAction,
   onGenerateReport,
   onClientClick,
+  onRefresh,
 }: ActivePlansDashboardProps) {
   const [selectedExec, setSelectedExec] = useState<string>('all')
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+  const [showSelectHint, setShowSelectHint] = useState(false)
+
   const executives = useMemo(
     () => Array.from(new Set(activeActions.map((a) => a.executive).filter(Boolean))).sort(),
     [activeActions],
   )
+
   const filteredActions = useMemo(() => {
     if (selectedExec === 'all') return activeActions
     return activeActions.filter((a) => a.executive === selectedExec)
   }, [activeActions, selectedExec])
+
   const totals = useMemo(() => {
     let totalMeta = 0
     let totalPremium = 0
@@ -75,84 +86,171 @@ export function ActivePlansDashboard({
     }
     return { totalMeta, totalPremium, count: filteredActions.length }
   }, [filteredActions, planCalculations])
+
+  const selectedAction = useMemo(
+    () => filteredActions.find((a) => a.id === selectedActionId) ?? null,
+    [filteredActions, selectedActionId],
+  )
+
+  const handleGerarRelatorio = () => {
+    if (!selectedAction) {
+      setShowSelectHint(true)
+      toast.info('Selecione um plano na tabela para gerar o relatório.')
+      setTimeout(() => setShowSelectHint(false), 4000)
+      return
+    }
+    onGenerateReport(selectedAction)
+  }
+
+  const exportToCSV = () => {
+    const headers = [
+      'Cliente',
+      'Executivo',
+      'Status',
+      'Prioridade',
+      'Início',
+      'Fim',
+      'Meta 1',
+      'Meta 2',
+      'Meta 3',
+      'Vendido',
+      'Prêmio Projetado',
+      'Prêmio Ganho',
+    ]
+    const rows = filteredActions.map((a) => {
+      const calc = planCalculations.get(a.id ?? '')
+      return [
+        `"${a.client_name}"`,
+        `"${a.executive || ''}"`,
+        `"${a.status}"`,
+        `"${a.priority || ''}"`,
+        a.data_inicio || '',
+        a.data_fim || '',
+        a.valor_meta ?? '',
+        a.meta_2 ?? '',
+        a.meta_3 ?? '',
+        a.valor_vendido ?? '',
+        calc?.premioProjetado ?? '',
+        calc?.totalGanhoPremio ?? '',
+      ].join(',')
+    })
+    const csv = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n')
+    const link = document.createElement('a')
+    link.setAttribute('href', encodeURI(csv))
+    link.setAttribute('download', 'Planos_Ativos_Export.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Exportação concluída!')
+  }
+
+  const kpiCards = [
+    {
+      label: 'Planos Ativos',
+      value: totals.count,
+      sub: selectedExec === 'all' ? 'Todos os executivos' : selectedExec,
+      icon: Flag,
+      color: 'amber',
+      meta: totals.totalMeta,
+    },
+    {
+      label: 'Total Meta 1',
+      value: formatCurrency(totals.totalMeta),
+      sub: 'Soma de todas as metas',
+      icon: Users,
+      color: 'emerald',
+    },
+    {
+      label: 'Prêmio Ganho',
+      value: formatCurrency(totals.totalPremium),
+      sub: 'Total de prêmios já conquistados',
+      icon: Trophy,
+      color: 'blue',
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="shadow-sm border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Planos Ativos
-              </p>
-              <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
-                <Flag className="h-4 w-4" />
-              </div>
-            </div>
-            <h3 className="mt-2 text-2xl font-extrabold tracking-tight">{totals.count}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {selectedExec === 'all' ? 'Todos os executivos' : selectedExec}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Total Meta 1
-              </p>
-              <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400">
-                <Users className="h-4 w-4" />
-              </div>
-            </div>
-            <h3 className="mt-2 text-2xl font-extrabold tracking-tight">
-              {formatCurrency(totals.totalMeta)}
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">Soma de todas as metas</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Prêmio Ganho
-              </p>
-              <div className="rounded-lg bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
-                <Trophy className="h-4 w-4" />
-              </div>
-            </div>
-            <h3 className="mt-2 text-2xl font-extrabold tracking-tight">
-              {formatCurrency(totals.totalPremium)}
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">Total de prêmios já conquistados</p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="flex items-center gap-2">
-        <Users className="h-4 w-4 text-muted-foreground" />
-        <Select value={selectedExec} onValueChange={setSelectedExec}>
-          <SelectTrigger className="h-8 text-xs w-[200px]">
-            <SelectValue placeholder="Filtrar por executivo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Executivos</SelectItem>
-            {executives.map((exec) => (
-              <SelectItem key={exec} value={exec}>
-                {exec}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedExec !== 'all' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedExec('all')}
-            className="h-8 text-xs text-destructive hover:bg-destructive/10"
+        {kpiCards.map((kpi) => (
+          <Card
+            key={kpi.label}
+            className={`shadow-sm border-${kpi.color}-500/20 bg-gradient-to-br from-${kpi.color}-500/5 via-transparent to-transparent`}
           >
-            Limpar filtro
-          </Button>
-        )}
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {kpi.label}
+                </p>
+                <div
+                  className={`rounded-lg bg-${kpi.color}-500/10 p-2 text-${kpi.color}-600 dark:text-${kpi.color}-400`}
+                >
+                  <kpi.icon className="h-4 w-4" />
+                </div>
+              </div>
+              <h3 className="mt-2 text-2xl font-extrabold tracking-tight">{kpi.value}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{kpi.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-border rounded-xl p-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedExec} onValueChange={setSelectedExec}>
+            <SelectTrigger className="h-8 text-xs w-[200px]">
+              <SelectValue placeholder="Filtrar por executivo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Executivos</SelectItem>
+              {executives.map((exec) => (
+                <SelectItem key={exec} value={exec}>
+                  {exec}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedExec !== 'all' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedExec('all')}
+              className="h-8 text-xs text-destructive hover:bg-destructive/10"
+            >
+              Limpar
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {showSelectHint && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-fade-in">
+              <AlertCircle className="h-3.5 w-3.5" /> Selecione um plano primeiro
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGerarRelatorio}
+            className="h-8 text-xs gap-1.5"
+          >
+            <FileText className="h-3.5 w-3.5" /> Gerar Relatório
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportToCSV} className="h-8 text-xs gap-1.5">
+            <Download className="h-3.5 w-3.5" /> Exportar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onRefresh?.()}
+            className="h-8 text-xs gap-1.5"
+            disabled={!onRefresh}
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Recarregar
+          </Button>
+        </div>
+      </div>
+
       <Card className="shadow-sm border-border">
         <CardContent className="pt-0">
           {filteredActions.length === 0 ? (
@@ -165,6 +263,7 @@ export function ActivePlansDashboard({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10" />
                     <TableHead className="text-xs whitespace-nowrap">Cliente / Agência</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Executivo</TableHead>
                     <TableHead className="text-xs whitespace-nowrap">Status</TableHead>
@@ -182,11 +281,28 @@ export function ActivePlansDashboard({
                 <TableBody>
                   {filteredActions.map((action) => {
                     const calc = planCalculations.get(action.id ?? '')
+                    const isSelected = action.id === selectedActionId
                     return (
-                      <TableRow key={action.id}>
+                      <TableRow
+                        key={action.id}
+                        className={`cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/30'}`}
+                        onClick={() => setSelectedActionId(action.id ?? null)}
+                      >
+                        <TableCell className="w-10">
+                          <input
+                            type="radio"
+                            checked={isSelected}
+                            onChange={() => setSelectedActionId(action.id ?? null)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-3.5 w-3.5 cursor-pointer accent-primary"
+                          />
+                        </TableCell>
                         <TableCell className="text-xs font-semibold">
                           <button
-                            onClick={() => onClientClick(action.client_name)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onClientClick(action.client_name)
+                            }}
                             className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
                           >
                             {action.client_name}
@@ -243,7 +359,10 @@ export function ActivePlansDashboard({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => onEditAction(action)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditAction(action)
+                              }}
                               className="h-7 text-[11px] gap-1 px-2"
                             >
                               <Eye className="h-3 w-3" /> Ver
@@ -251,7 +370,10 @@ export function ActivePlansDashboard({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onGenerateReport(action)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onGenerateReport(action)
+                              }}
                               className="h-7 text-[11px] px-2 text-blue-600 hover:bg-blue-500/10"
                               title="Gerar Relatório"
                             >
