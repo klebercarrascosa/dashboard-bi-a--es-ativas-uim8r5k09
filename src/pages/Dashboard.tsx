@@ -326,7 +326,14 @@ export default function Dashboard() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
             <Calendar className="h-4 w-4 text-emerald-500 shrink-0 ml-1" />
             <span className="text-xs text-muted-foreground whitespace-nowrap mr-2 font-medium">
-              {new Date().toLocaleDateString('pt-BR')}
+              {new Date().toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap mr-2 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800">
+              {new Date().getFullYear()}
             </span>
             {SHEET_MONTHS.map((month) => (
               <Button

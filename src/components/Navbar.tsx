@@ -1,26 +1,15 @@
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { RefreshCw, Settings, ZoomIn, ZoomOut, Sun, Moon, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
-import {
-  Sun,
-  Moon,
-  LogOut,
-  RefreshCw,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-  Settings,
-  ShieldCheck,
-  Activity,
-} from 'lucide-react'
+import { CURRENT_YEAR, formatLastUpdated } from '@/lib/date-utils'
 
 interface NavbarProps {
   zoom: number
-  setZoom: React.Dispatch<React.SetStateAction<number>>
+  setZoom: (zoom: number) => void
   onRefresh: () => void
   isRefreshing: boolean
-  onOpenSettings?: () => void
+  onOpenSettings: () => void
   lastUpdated: Date | null
 }
 
@@ -36,137 +25,74 @@ export function Navbar({
   const { theme, toggleTheme } = useTheme()
   const isAdmin = user?.role === 'admin'
 
-  const zoomIn = () => setZoom((prev) => Math.min(prev + 10, 150))
-  const zoomOut = () => setZoom((prev) => Math.max(prev - 10, 70))
-  const zoomReset = () => setZoom(100)
-
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
-            <Activity className="h-5 w-5 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight">Ações Ativas BI</h1>
-              <Badge
-                variant="outline"
-                className={`text-xs ${user?.role === 'admin' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'}`}
-              >
-                <ShieldCheck className="mr-1 h-3 w-3" />{' '}
-                {user?.role === 'admin' ? 'Admin' : 'Executivo'}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              Controle Comercial Google Sheets &amp; Análise YoY
-            </p>
-          </div>
+          <h1 className="text-base font-bold text-foreground">Dashboard BI</h1>
+          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50">
+            {CURRENT_YEAR}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Zoom Controls */}
-          <div className="hidden md:flex items-center border rounded-lg p-1 bg-muted/40 gap-1 text-xs">
+          <div className="hidden md:flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
-              onClick={zoomOut}
-              title="Diminuir Zoom"
+              className="h-8 w-8"
+              onClick={() => setZoom(Math.max(50, zoom - 10))}
             >
-              <ZoomOut className="h-3.5 w-3.5" />
+              <ZoomOut className="h-4 w-4" />
             </Button>
-            <button
-              onClick={zoomReset}
-              className="px-1.5 font-mono font-medium hover:underline"
-              title="Resetar Zoom"
-            >
-              {zoom}%
-            </button>
+            <span className="text-xs text-muted-foreground w-10 text-center">{zoom}%</span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
-              onClick={zoomIn}
-              title="Aumentar Zoom"
+              className="h-8 w-8"
+              onClick={() => setZoom(Math.min(200, zoom + 10))}
             >
-              <ZoomIn className="h-3.5 w-3.5" />
+              <ZoomIn className="h-4 w-4" />
             </Button>
-            {zoom !== 100 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={zoomReset}
-                title="Restaurar 100%"
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
           </div>
 
-          {/* Sync Button */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="h-9 gap-1.5 text-xs font-medium"
+            className="h-8"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Sincronizar</span>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
 
-          {/* Settings Modal - Only visible to admin */}
-          {isAdmin && onOpenSettings && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={onOpenSettings}
-              title="Configurações de Planilha"
-            >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
+          {isAdmin && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onOpenSettings}>
               <Settings className="h-4 w-4" />
             </Button>
           )}
 
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            onClick={toggleTheme}
-            title="Alternar Tema"
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-4 w-4 text-amber-400" />
-            ) : (
-              <Moon className="h-4 w-4 text-slate-700" />
-            )}
-          </Button>
-
-          {/* User & Logout */}
-          <div className="flex items-center pl-2 border-l gap-2">
-            <div className="hidden lg:block text-right text-xs">
-              <p className="font-semibold leading-tight">
-                {user?.name || user?.email || 'Usuário'}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {user?.role === 'admin' ? 'Administrador' : user?.executive_name || user?.email}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-destructive hover:bg-destructive/10"
-              onClick={signOut}
-              title="Sair do Sistema"
-            >
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border">
+            <span className="text-xs text-muted-foreground hidden sm:block">
+              {user?.name || user?.email}
+            </span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
+
+      {lastUpdated && (
+        <div className="px-4 md:px-6 py-1 text-xs text-muted-foreground border-t border-border bg-muted/30">
+          Última atualização: {formatLastUpdated(lastUpdated)}
+        </div>
+      )}
     </header>
   )
 }
