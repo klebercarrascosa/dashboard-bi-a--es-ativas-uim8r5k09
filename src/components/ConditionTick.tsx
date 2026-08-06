@@ -22,7 +22,7 @@ const CONDITIONS = [
     activeClass: 'border-indigo-500 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
   },
   {
-    value: 'AZUL TOP',
+    value: 'AZUL',
     label: 'AZUL',
     activeClass: 'border-sky-500 bg-sky-500/15 text-sky-600 dark:text-sky-400',
   },

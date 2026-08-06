@@ -63,7 +63,7 @@ function getBadgeStatusColor(status?: string) {
 const CONDICAO_COLORS: Record<string, string> = {
   GOL: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
   LATAM: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
-  'AZUL TOP': 'bg-sky-500/10 text-sky-600 border-sky-500/30',
+  AZUL: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
   RC: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
 }
 

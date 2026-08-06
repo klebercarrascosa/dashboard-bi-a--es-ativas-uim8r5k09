@@ -30,7 +30,7 @@ const CONDICAO_STYLES: Record<string, { color: string; bg: string; border: strin
     bg: 'bg-indigo-500/10',
     border: 'border-indigo-500/20',
   },
-  'AZUL TOP': {
+  AZUL: {
     color: 'text-sky-600 dark:text-sky-400',
     bg: 'bg-sky-500/10',
     border: 'border-sky-500/20',
@@ -42,7 +42,7 @@ const CONDICAO_STYLES: Record<string, { color: string; bg: string; border: strin
   },
 }
 
-const ALL_CONDITIONS = ['GOL', 'LATAM', 'AZUL TOP', 'RC'] as const
+const ALL_CONDITIONS = ['GOL', 'LATAM', 'AZUL', 'RC'] as const
 
 export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPanelProps) {
   const withCondicao = activeActions.filter(
@@ -57,7 +57,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
 
   const total = withCondicao.length
 
-  const order: Record<string, number> = { GOL: 0, LATAM: 1, 'AZUL TOP': 2, RC: 3 }
+  const order: Record<string, number> = { GOL: 0, LATAM: 1, AZUL: 2, RC: 3 }
   const sorted = [...withCondicao].sort((a, b) => {
     const aCond = normalizeCondicao(a.condicao)[0] || ''
     const bCond = normalizeCondicao(b.condicao)[0] || ''
@@ -75,7 +75,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <Plane className="h-4 w-4 text-sky-500" />
-            Clientes GOL / LATAM / AZUL TOP / RC
+            Clientes GOL / LATAM / AZUL / RC
           </CardTitle>
           <span className="text-[11px] font-medium text-muted-foreground">
             {total} cliente{total !== 1 ? 's' : ''} marcado{total !== 1 ? 's' : ''}
@@ -111,7 +111,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
             <p className="text-xs text-muted-foreground">Nenhum cliente marcado ainda.</p>
             {isAdmin && (
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                Marque uma condição (GOL, LATAM, AZUL TOP ou RC) para um cliente na tabela de
+                Marque uma condição (GOL, LATAM, AZUL ou RC) para um cliente na tabela de
                 Detalhamento para vê-lo aqui.
               </p>
             )}

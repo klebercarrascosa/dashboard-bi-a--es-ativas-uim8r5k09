@@ -29,8 +29,8 @@ const CONDITIONS = [
     badge: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
   },
   {
-    value: 'AZUL TOP',
-    label: 'AZUL TOP',
+    value: 'AZUL',
+    label: 'AZUL',
     color: 'border-sky-500/40 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20',
     badge: 'bg-sky-500/10 text-sky-600 border-sky-500/30',
   },

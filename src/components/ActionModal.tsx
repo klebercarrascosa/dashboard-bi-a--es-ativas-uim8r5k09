@@ -517,7 +517,7 @@ export function ActionModal({
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Condição (Companhia Aérea) — Múltipla</Label>
             <div className="flex items-center gap-4 flex-wrap">
-              {['GOL', 'LATAM', 'AZUL TOP', 'RC'].map((cond) => (
+              {['GOL', 'LATAM', 'AZUL', 'RC'].map((cond) => (
                 <label key={cond} className="flex items-center gap-2 cursor-pointer text-xs">
                   <Checkbox
                     checked={condicao.includes(cond)}
