@@ -476,7 +476,7 @@ export default function Dashboard() {
           <>
             <KPICards data={displayData} activeTab={activeTab} />
 
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-2">
               <ActivePlansKpi activeActions={activeOnlyActions} today={today} isAdmin={isAdmin} />
               <ActiveAgenciesKpi
                 activeActions={activeOnlyActions}
@@ -503,6 +503,8 @@ export default function Dashboard() {
               onGenerateReport={handleGenerateReport}
               onDeleteAction={handleDeleteAction}
               onClientClick={handleClientClick}
+              isAdmin={isAdmin}
+              onUpdateCondition={loadActiveActions}
             />
           </>
         )}
@@ -547,6 +549,8 @@ export default function Dashboard() {
         monthDataMap={monthDataMap}
         activeActions={roleFilteredActions}
         planCalculations={planCalculations}
+        isAdmin={isAdmin}
+        onUpdateCondition={loadActiveActions}
       />
 
       <ClientPlansDetailDialog
