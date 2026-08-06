@@ -63,7 +63,9 @@ export default function Dashboard() {
 
   const [zoom, setZoom] = useState(100)
   const [spreadsheetId, setSpreadsheetId] = useState(DEFAULT_SPREADSHEET_ID)
-  const [activeTab, setActiveTab] = useState('Visão Geral')
+  const [activeTab, setActiveTab] = useState(
+    SHEET_MONTHS[new Date().getMonth() + 1] || 'Visão Geral',
+  )
   const [sheetData, setSheetData] = useState<SheetRow[]>([])
   const [activeActions, setActiveActions] = useState<ActiveAction[]>([])
   const [isRefreshing, setIsRefreshing] = useState(false)

@@ -122,6 +122,7 @@ export interface PlanCalculation {
   tierAlcancado: 0 | 1 | 2 | 3
   perMetaGains: PerMetaGain[]
   totalGanhoPremio: number
+  premioProjetado: number
   provisionalPrizeMeta1: number
   provisionalPrizeMeta2: number
   provisionalPrizeMeta3: number
@@ -187,6 +188,7 @@ export function calculatePlanMetrics(action: ActiveAction, somaVendida: number):
     ...tierGain,
     perMetaGains,
     totalGanhoPremio,
+    premioProjetado: tierGain.ganhoPremio,
     provisionalPrizeMeta1,
     provisionalPrizeMeta2,
     provisionalPrizeMeta3,
@@ -301,6 +303,8 @@ export function generateReportMessage(action: ActiveAction, calc: PlanCalculatio
     lines.push(`📈 % da Meta 2 Atingida: ${calc.pctAtingidoMeta2.toFixed(1)}%`)
   if (calc.pctAtingidoMeta3 !== null)
     lines.push(`📈 % da Meta 3 Atingida: ${calc.pctAtingidoMeta3.toFixed(1)}%`)
+
+  lines.push(`🎯 Prêmio Projetado: ${formatCurrencyBR(calc.premioProjetado)}`)
 
   if (calc.totalGanhoPremio > 0) {
     lines.push('')

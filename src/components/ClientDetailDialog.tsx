@@ -253,6 +253,12 @@ export function ClientDetailDialog({
                   <span className="font-bold">{formatCurrency(calc.somaVendida)}</span>
                 </div>
                 <div>
+                  <span className="text-muted-foreground">Prêmio Projetado: </span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {calc.premioProjetado > 0 ? formatCurrency(calc.premioProjetado) : '—'}
+                  </span>
+                </div>
+                <div>
                   <span className="text-muted-foreground">% Atingido: </span>
                   <span className="font-bold">
                     {calc.pctAtingido !== null ? `${calc.pctAtingido.toFixed(1)}%` : '—'}

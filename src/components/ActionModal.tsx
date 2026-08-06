@@ -463,7 +463,7 @@ export function ActionModal({
               )}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Ganho Calculado</Label>
+              <Label className="text-xs font-semibold">Prêmio Projetado</Label>
               <div className="h-9 flex items-center px-3 rounded-md border bg-emerald-500/5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 {(() => {
                   const vv = parseFloat(valorVendido) || 0

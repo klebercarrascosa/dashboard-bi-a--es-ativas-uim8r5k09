@@ -174,6 +174,7 @@ export function ActivePlansDashboard({
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 2</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Meta 3</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Vendido</TableHead>
+                    <TableHead className="text-xs text-right whitespace-nowrap">Proj.</TableHead>
                     <TableHead className="text-xs text-right whitespace-nowrap">Prêmio</TableHead>
                     <TableHead className="text-xs text-center whitespace-nowrap">Ações</TableHead>
                   </TableRow>
@@ -226,6 +227,11 @@ export function ActivePlansDashboard({
                         </TableCell>
                         <TableCell className="text-xs text-right font-mono">
                           {formatCurrency(action.valor_vendido ?? null)}
+                        </TableCell>
+                        <TableCell className="text-xs text-right font-mono font-semibold text-blue-600 dark:text-blue-400">
+                          {calc?.premioProjetado != null && calc.premioProjetado > 0
+                            ? formatCurrency(calc.premioProjetado)
+                            : '—'}
                         </TableCell>
                         <TableCell className="text-xs text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                           {calc?.totalGanhoPremio != null && calc.totalGanhoPremio > 0

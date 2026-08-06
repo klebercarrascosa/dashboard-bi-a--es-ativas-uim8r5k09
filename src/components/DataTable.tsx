@@ -157,6 +157,7 @@ export function DataTable({
       'Meta 2',
       'Meta 3',
       'Soma Vendida',
+      'Prêmio Projetado',
       'Quanto Falta',
       'Quanto Falta M2',
       'Quanto Falta M3',
@@ -166,7 +167,7 @@ export function DataTable({
     const rows = sortedData.map((r) => {
       if (!r) return []
       const action = activeActions.find((a) => a.client_name === r.clienteUnificado)
-      const calc = planCalculations?.get(r.clienteUnificado)
+      const calc = action ? planCalculations?.get(action.id ?? '') : null
       return [
         `"${r.clienteUnificado}"`,
         `"${r.executivo}"`,
@@ -182,6 +183,7 @@ export function DataTable({
         action?.meta_2 ?? '',
         action?.meta_3 ?? '',
         calc?.somaVendida ?? '',
+        calc?.premioProjetado ?? '',
         calc?.quantoFalta ?? '',
         calc?.quantoFaltaMeta2 ?? '',
         calc?.quantoFaltaMeta3 ?? '',
@@ -262,7 +264,7 @@ export function DataTable({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[1650px] border-collapse">
+          <table className="w-full text-left text-xs min-w-[1750px] border-collapse">
             <thead className="bg-muted/50 text-muted-foreground border-y">
               <tr>
                 <th className={`${thBase}`}>Cliente Unificado</th>
@@ -307,6 +309,7 @@ export function DataTable({
                 <th className={`${thBase} text-right`}>Meta 2 (R$)</th>
                 <th className={`${thBase} text-right`}>Meta 3 (R$)</th>
                 <th className={`${thBase} text-right border-l border-muted`}>Soma Vendida</th>
+                <th className={`${thBase} text-right`}>Prêmio Projetado</th>
                 <th className={`${thBase} text-right`}>Falta (M1)</th>
                 <th className={`${thBase} text-right`}>Falta (M2)</th>
                 <th className={`${thBase} text-right`}>Falta (M3)</th>
@@ -317,7 +320,7 @@ export function DataTable({
             <tbody className="divide-y">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={19} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={20} className="py-8 text-center text-muted-foreground">
                     Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
@@ -407,6 +410,15 @@ export function DataTable({
                       >
                         {calc && hasDates ? (
                           formatCurrency(calc.somaVendida)
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td
+                        className={`${tdBase} text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400`}
+                      >
+                        {calc ? (
+                          formatCurrency(calc.premioProjetado)
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
