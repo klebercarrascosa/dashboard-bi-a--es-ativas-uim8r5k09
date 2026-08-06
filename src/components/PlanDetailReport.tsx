@@ -18,6 +18,7 @@ import {
   CalendarDays,
   Gift,
 } from 'lucide-react'
+import { ConditionSelector } from '@/components/ConditionSelector'
 
 const STATUS_COLORS: Record<string, string> = {
   Planejada: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
@@ -110,9 +111,18 @@ interface PlanDetailReportProps {
   calc: PlanCalculation | null
   monthDataMap: Map<string, SheetRow[]>
   planIndex?: number
+  isAdmin?: boolean
+  onUpdateCondition?: () => void
 }
 
-export function PlanDetailReport({ action, calc, monthDataMap, planIndex }: PlanDetailReportProps) {
+export function PlanDetailReport({
+  action,
+  calc,
+  monthDataMap,
+  planIndex,
+  isAdmin = false,
+  onUpdateCondition,
+}: PlanDetailReportProps) {
   const breakdown = getMonthlyBreakdown(
     monthDataMap,
     action.client_name,
@@ -159,6 +169,14 @@ export function PlanDetailReport({ action, calc, monthDataMap, planIndex }: Plan
           )}
         </div>
       </div>
+      {(isAdmin || action.condicao) && (
+        <ConditionSelector
+          actionId={action.id!}
+          currentCondicao={action.condicao}
+          isAdmin={isAdmin}
+          onUpdate={onUpdateCondition}
+        />
+      )}
       <div className="grid grid-cols-3 gap-2">
         <MetaCard
           label="Meta 1"
