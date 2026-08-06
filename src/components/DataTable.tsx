@@ -64,6 +64,7 @@ const CONDICAO_COLORS: Record<string, string> = {
   GOL: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
   LATAM: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
   'AZUL TOP': 'bg-sky-500/10 text-sky-600 border-sky-500/30',
+  RC: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
 }
 
 interface DataTableProps {
@@ -184,7 +185,7 @@ export function DataTable({
         calc?.quantoFalta ?? '',
         calc?.quantoFaltaMeta2 ?? '',
         calc?.quantoFaltaMeta3 ?? '',
-        action?.condicao ?? '',
+        action?.condicao?.length ? action.condicao.join('; ') : '',
         action?.status ?? '',
       ]
     })
@@ -438,13 +439,18 @@ export function DataTable({
                             currentCondicao={action.condicao}
                             onUpdate={onUpdateCondition}
                           />
-                        ) : action?.condicao ? (
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] ${CONDICAO_COLORS[action.condicao] ?? ''}`}
-                          >
-                            {action.condicao}
-                          </Badge>
+                        ) : action?.condicao && action.condicao.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 justify-center">
+                            {action.condicao.map((c) => (
+                              <Badge
+                                key={c}
+                                variant="outline"
+                                className={`text-[10px] ${CONDICAO_COLORS[c] ?? ''}`}
+                              >
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}

@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { updateActiveAction } from '@/services/actions'
+import { updateActiveAction, normalizeCondicao } from '@/services/actions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 interface ConditionTickProps {
   actionId: string
-  currentCondicao?: string
+  currentCondicao?: string[]
   onUpdate?: () => void
 }
 
@@ -26,17 +26,27 @@ const CONDITIONS = [
     label: 'AZUL',
     activeClass: 'border-sky-500 bg-sky-500/15 text-sky-600 dark:text-sky-400',
   },
+  {
+    value: 'RC',
+    label: 'RC',
+    activeClass: 'border-rose-500 bg-rose-500/15 text-rose-600 dark:text-rose-400',
+  },
 ] as const
 
 export function ConditionTick({ actionId, currentCondicao, onUpdate }: ConditionTickProps) {
   const [loading, setLoading] = useState<string | null>(null)
+  const conditions = normalizeCondicao(currentCondicao)
 
   const handleToggle = async (value: string) => {
-    const newValue = currentCondicao === value ? '' : value
+    const newValue = conditions.includes(value)
+      ? conditions.filter((v) => v !== value)
+      : [...conditions, value]
     setLoading(value)
     try {
       await updateActiveAction(actionId, { condicao: newValue })
-      toast.success(newValue ? `Condição: ${newValue}` : 'Condição removida')
+      toast.success(
+        newValue.length > 0 ? `Condições: ${newValue.join(', ')}` : 'Condições removidas',
+      )
       onUpdate?.()
     } catch {
       toast.error('Erro ao atualizar condição.')
@@ -46,9 +56,9 @@ export function ConditionTick({ actionId, currentCondicao, onUpdate }: Condition
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 flex-wrap justify-center">
       {CONDITIONS.map((cond) => {
-        const isActive = currentCondicao === cond.value
+        const isActive = conditions.includes(cond.value)
         const isLoading = loading === cond.value
         return (
           <button

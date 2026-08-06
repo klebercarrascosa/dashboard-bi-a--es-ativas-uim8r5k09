@@ -7,8 +7,9 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { ConditionSelector } from '@/components/ConditionSelector'
-import type { ActiveAction } from '@/services/actions'
+import { normalizeCondicao, type ActiveAction } from '@/services/actions'
 import { Plane } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -34,25 +35,37 @@ const CONDICAO_STYLES: Record<string, { color: string; bg: string; border: strin
     bg: 'bg-sky-500/10',
     border: 'border-sky-500/20',
   },
+  RC: {
+    color: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-rose-500/10',
+    border: 'border-rose-500/20',
+  },
 }
+
+const ALL_CONDITIONS = ['GOL', 'LATAM', 'AZUL TOP', 'RC'] as const
 
 export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPanelProps) {
   const withCondicao = activeActions.filter(
-    (a) => a.condicao && a.condicao.trim() !== '' && a.status !== 'Concluído',
+    (a) => normalizeCondicao(a.condicao).length > 0 && a.status !== 'Concluído',
   )
   const withoutCondicao = activeActions.filter(
-    (a) => (!a.condicao || a.condicao.trim() === '') && a.status !== 'Concluído',
+    (a) => normalizeCondicao(a.condicao).length === 0 && a.status !== 'Concluído',
   )
 
-  const gol = withCondicao.filter((a) => a.condicao === 'GOL').length
-  const latam = withCondicao.filter((a) => a.condicao === 'LATAM').length
-  const azul = withCondicao.filter((a) => a.condicao === 'AZUL TOP').length
-  const total = gol + latam + azul
+  const counts = ALL_CONDITIONS.map((cond) => ({
+    label: cond,
+    count: withCondicao.filter((a) => normalizeCondicao(a.condicao).includes(cond)).length,
+    key: cond,
+  }))
 
-  const order: Record<string, number> = { GOL: 0, LATAM: 1, 'AZUL TOP': 2 }
+  const total = withCondicao.length
+
+  const order: Record<string, number> = { GOL: 0, LATAM: 1, 'AZUL TOP': 2, RC: 3 }
   const sorted = [...withCondicao].sort((a, b) => {
-    const oa = order[a.condicao as string] ?? 3
-    const ob = order[b.condicao as string] ?? 3
+    const aCond = normalizeCondicao(a.condicao)[0] || ''
+    const bCond = normalizeCondicao(b.condicao)[0] || ''
+    const oa = order[aCond] ?? 4
+    const ob = order[bCond] ?? 4
     if (oa !== ob) return oa - ob
     return a.client_name.localeCompare(b.client_name)
   })
@@ -61,26 +74,20 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
     ? [...sorted, ...withoutCondicao.sort((a, b) => a.client_name.localeCompare(b.client_name))]
     : sorted
 
-  const kpiItems = [
-    { label: 'GOL', count: gol, key: 'GOL' },
-    { label: 'LATAM', count: latam, key: 'LATAM' },
-    { label: 'AZUL TOP', count: azul, key: 'AZUL TOP' },
-  ]
-
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <Plane className="h-4 w-4 text-sky-500" />
-            Clientes GOL / LATAM / AZUL TOP
+            Clientes GOL / LATAM / AZUL TOP / RC
           </CardTitle>
           <span className="text-[11px] font-medium text-muted-foreground">
             {total} cliente{total !== 1 ? 's' : ''} marcado{total !== 1 ? 's' : ''}
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          {kpiItems.map((item) => {
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+          {counts.map((item) => {
             const style = CONDICAO_STYLES[item.key]
             return (
               <div
@@ -109,7 +116,7 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
             <p className="text-xs text-muted-foreground">Nenhum cliente marcado ainda.</p>
             {isAdmin && (
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                Use os botões abaixo de cada cliente para definir a condição.
+                Use os botões abaixo de cada cliente para definir as condições.
               </p>
             )}
           </div>
@@ -125,19 +132,21 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
                     Exec
                   </TableHead>
                   <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
-                    Condição
+                    Condições
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {allClients.map((action) => {
-                  const hasCondicao = action.condicao && action.condicao.trim() !== ''
+                  const conditions = normalizeCondicao(action.condicao)
+                  const hasCondicao = conditions.length > 0
+                  const firstCond = conditions[0]
                   return (
                     <TableRow
                       key={action.id}
                       className={cn(
                         'transition-colors',
-                        hasCondicao && CONDICAO_STYLES[action.condicao as string]?.bg,
+                        hasCondicao && firstCond && CONDICAO_STYLES[firstCond]?.bg,
                       )}
                     >
                       <TableCell className="text-xs font-medium py-2.5 max-w-[140px] truncate">
@@ -147,12 +156,33 @@ export function CondicaoPanel({ activeActions, isAdmin, onUpdate }: CondicaoPane
                         {action.executive || '—'}
                       </TableCell>
                       <TableCell className="py-2.5">
-                        <ConditionSelector
-                          actionId={action.id!}
-                          currentCondicao={action.condicao}
-                          isAdmin={isAdmin}
-                          onUpdate={onUpdate}
-                        />
+                        {isAdmin && action.id ? (
+                          <ConditionSelector
+                            actionId={action.id}
+                            currentCondicao={action.condicao}
+                            isAdmin={isAdmin}
+                            onUpdate={onUpdate}
+                          />
+                        ) : hasCondicao ? (
+                          <div className="flex flex-wrap gap-1">
+                            {conditions.map((c) => (
+                              <Badge
+                                key={c}
+                                variant="outline"
+                                className={cn(
+                                  'text-[10px] font-semibold',
+                                  CONDICAO_STYLES[c]?.border,
+                                  CONDICAO_STYLES[c]?.bg,
+                                  CONDICAO_STYLES[c]?.color,
+                                )}
+                              >
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   )
